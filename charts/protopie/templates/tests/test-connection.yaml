@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "protopie.fullname" . }}-test-connection"
+  labels:
+    {{- include "protopie.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+spec:
+  containers:
+    - name: wget
+      image: busybox
+      command: ['wget']
+      args:
+        - '-qO-'
+        - 'nginx.{{ .Release.Namespace }}.svc.cluster.local'
+        - 'ent-cloud-api-svc.{{ .Release.Namespace }}.svc.cluster.local'
+  restartPolicy: Never

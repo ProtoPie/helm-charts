@@ -1,0 +1,62 @@
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: kubectl-exec-runner
+rules:
+  - apiGroups:
+    - ""
+    resources:
+    - "pods"
+    - "pods/log"
+    verbs:
+    - "get"
+    - "list"
+  - apiGroups:
+    - ""
+    resources:
+    - "pods/exec"
+    verbs:
+    - "create"
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: delete-download-sa
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: kubectl-exec-runner--delete-download-sa
+subjects:
+  - kind: ServiceAccount
+    name: delete-download-sa
+    apiGroup: ""
+roleRef:
+  kind: Role
+  name: kubectl-exec-runner
+  apiGroup: ""
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: delete-download-files
+spec:
+  schedule: {{ .Values.cloud.cleanUpSchedule | quote }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: delete-download-sa
+          restartPolicy: Never
+          activeDeadlineSeconds: 300
+          containers:
+            - name: delete-download-files
+              image: bitnami/kubectl:1.28.2
+              imagePullPolicy: IfNotPresent
+              command:
+                - /bin/sh
+                - -c
+                - kubectl exec pod/enterprise-cloud-api-0 -- sh -c 'rm -rf /app/download/*'

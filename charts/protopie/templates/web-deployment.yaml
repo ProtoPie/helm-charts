@@ -1,0 +1,18 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: enterprise-cloud-web
+spec:
+  selector:
+    matchLabels:
+      app: ent-cloud-web
+  template:
+    metadata:
+      labels:
+        app: ent-cloud-web
+    spec:
+      containers:
+        - name: ent-cloud-web
+          image: "{{ .Values.image.web.repository }}:{{ .Values.image.web.tag }}"
+          ports:
+            - containerPort: 3000

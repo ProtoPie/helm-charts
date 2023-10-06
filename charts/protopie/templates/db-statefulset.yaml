@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name:  db
+spec:
+  serviceName: db
+  replicas: 1
+  selector:
+    matchLabels:
+      app:  db
+  template:
+    metadata:
+      labels:
+        app:  db
+    spec:
+      containers:
+      - name:  db
+        image: postgres:10.5-alpine
+        ports:
+        - containerPort: 5432
+          name:  db
+        env:
+        - name: POSTGRES_USER
+          value: {{ .Values.db.env.POSTGRES_USER }}
+        - name: POSTGRES_PASSWORD
+          value: {{ .Values.db.env.POSTGRES_PASSWORD }}
+        - name: DB_DATABASE
+          value: {{ .Values.db.env.DB_DATABASE }}
+        - name: DB_DATABASE_ANALYTICS
+          value: {{ .Values.db.env.DB_DATABASE_ANALYTICS }}
+        - name: DB_READ_USER
+          value: {{ .Values.db.env.DB_READ_USER }}
+        - name: DB_WRITE_USER
+          value: {{ .Values.db.env.DB_WRITE_USER }}
+        - name: DB_READ_PASSWORD
+          value: {{ .Values.db.env.DB_READ_PASSWORD }}
+        - name: DB_WRITE_PASSWORD
+          value: {{ .Values.db.env.DB_WRITE_PASSWORD }}
+        - name: PGDATA
+          value: {{ .Values.db.env.PGDATA }}
+        volumeMounts:
+        - name: pg-data
+          mountPath: /data
+        - name: db-initialize
+          mountPath: /docker-entrypoint-initdb.d
+      volumes:
+        - name: db-initialize
+          configMap:
+            name: postgres-init-script-configmap
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+  volumeClaimTemplates:
+  - metadata:
+      name: pg-data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: {{ .Values.db.volume }}

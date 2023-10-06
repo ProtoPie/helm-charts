@@ -1,0 +1,69 @@
+{{- if .Values.analytics.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: enterprise-analytics-api
+  labels:
+    {{- include "protopie.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      app: ent-analytics-api
+  template:
+    metadata:
+      labels:
+        app: ent-analytics-api
+    spec:
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+      - name: ent-analytics-api
+        image: "{{ .Values.image.analytics.api.repository }}:{{ .Values.image.analytics.api.tag }}"
+        env:
+        - name: DB_HOST
+          value: db
+        - name: DB_NAME
+          value: {{ .Values.db.env.DB_DATABASE_ANALYTICS }}
+        - name: DB_USER
+          value: {{ .Values.db.env.DB_WRITE_USER }}
+        - name: DB_PORT
+          value: !!str {{ .Values.db.env.DB_PORT | toString }}
+        - name: DB_PASSWORD
+          value: {{ .Values.db.env.DB_READ_PASSWORD }}
+        - name: DJANGO_SECRET_KEY
+          value: {{ .Values.analytics.api.env.DJANGO_SECRET_KEY }}
+        - name: ROOT_PATH
+          value: {{ .Values.analytics.api.env.ROOT_PATH }}
+        - name: DEBUG
+          value: {{ .Values.analytics.api.env.DEBUG }}
+        - name: ALLOWED_HOSTS
+          value: {{ .Values.analytics.api.env.ALLOWED_HOSTS | quote }}
+        ports:
+        - name: http
+          containerPort: 8000
+          protocol: TCP
+        livenessProbe:
+          httpGet:
+            path: /
+            port: http
+        readinessProbe:
+          httpGet:
+            path: /
+            port: http
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ent-analytics-api-svc
+  labels:
+    {{- include "protopie.labels" . | nindent 4 }}
+spec:
+  selector:
+    app: ent-analytics-api
+  ports:
+  - name: analytics-api
+    port: 80
+    targetPort: 8000
+{{- end }}

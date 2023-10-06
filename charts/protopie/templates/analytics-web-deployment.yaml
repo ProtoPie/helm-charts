@@ -1,0 +1,57 @@
+{{- if .Values.analytics.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: enterprise-analytics-web
+  labels:
+    {{- include "protopie.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      app: ent-analytics-web
+  template:
+    metadata:
+      labels:
+        app: ent-analytics-web
+    spec:
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+      - name: ent-analytics-web
+        image: "{{ .Values.image.analytics.web.repository }}:{{ .Values.image.analytics.web.tag }}"
+        env:
+        - name: ANALYTICS_ENTERPRISE_API_URL
+          value: "http://ent-analytics-api-svc.{{ .Release.Namespace }}.svc.cluster.local"
+        - name: ENTERPRISE_API_URL
+          value: "http://ent-cloud-api-svc.{{ .Release.Namespace }}.svc.cluster.local"
+        - name: URL_BASE_PATHNAME
+          value: {{ .Values.analytics.web.env.URL_BASE_PATHNAME }}
+        - name: AE_API_USER_ID
+          value: {{ .Values.analytics.web.env.AE_API_USER_ID }}
+        - name: AE_API_USER_PASS
+          value: {{ .Values.analytics.web.env.AE_API_USER_PASS }}
+        - name: DEBUG
+          value: {{ .Values.analytics.web.env.DEBUG }}
+        - name: COOKIE_NAME
+          value: {{ .Values.analytics.web.env.COOKIE_NAME }}
+        ports:
+        - name: http
+          containerPort: 8050
+          protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ent-analytics-web-svc
+  labels:
+    {{- include "protopie.labels" . | nindent 4 }}
+spec:
+  selector:
+    app: ent-analytics-web
+  ports:
+  - name: analytics-web
+    port: 80
+    targetPort: 8050
+{{- end }}

@@ -1,0 +1,70 @@
+nodeSelector: {}
+podAnnotations:
+  app: protopie
+
+image:
+  pullPolicy: IfNotPresent
+  cloud:
+    api:
+      repository: 310455165573.dkr.ecr.ap-northeast-2.amazonaws.com/enterprise-cloud
+      tag: api-10.4.0
+    web:
+      repository: 310455165573.dkr.ecr.ap-northeast-2.amazonaws.com/enterprise-cloud
+      tag: web-10.4.0
+  analytics:
+    web:
+      repository: 310455165573.dkr.ecr.ap-northeast-2.amazonaws.com/analytics-enterprise
+      tag: web-1.0.1
+    api:
+      repository: 310455165573.dkr.ecr.ap-northeast-2.amazonaws.com/analytics-enterprise
+      tag: api-1.0.1
+
+ingress:
+  enabled: false
+  certificateArn: arn:aws:acm:ap-northeast-2:794161565898:certificate/a887269c-15ad-45d3-84ed-11e89fd55163
+  host: dev-ee.protopie.works
+
+analytics:
+  enabled: false
+  web:
+    env:
+      DEBUG: DO_NOT_DEFINE_THIS_VARIABLE_ON_PRODUCT
+      COOKIE_NAME: AE_TOKEN
+      URL_BASE_PATHNAME: "/analytics/"
+      AE_API_USER_ID: "admin"
+      AE_API_USER_PASS: ""
+  api:
+    env:
+      DJANGO_SECRET_KEY: ""
+      ROOT_PATH: "/api/analytics/"
+      DEBUG: DO_NOT_DEFINE_THIS_VARIABLE_ON_PRODUCT
+      ALLOWED_HOSTS: "*"
+
+cloud:
+  volumes:
+    upload: 10Gi
+  config:
+    yml: "you can set content by --set-file config.yml=config.yml"
+  license:
+    pem: "you can set content by --set-file license.pem license.pem"
+  # Europ/Berlin 5 AM - UTC 3 AM - 0 3 * * *
+  # America/NewYork 6 AM - UTC 10 AM - 0 10 * * *
+  # America/California 3 AM - UTC 10 AM - 0 10 * * *
+  # Asia/Mumbai 5 AM - UTC 11:30 PM - 30 11 * * *
+  # Asia/Seoul 5 AM - UTC 20 PM - 0 20 * * *
+  cleanUpSchedule: "* 20 * * *"
+
+db:
+  volume: 20Gi
+  env:
+    DB_HOST: db
+    DB_PORT: 5432
+    POSTGRES_USER: postgres
+    POSTGRES_PASSWORD: ""
+    DB_DATABASE: proteam
+    DB_DATABASE_ANALYTICS: analytics
+    DB_READ_USER: protopie_r
+    DB_WRITE_USER: protopie_w
+    DB_READ_PASSWORD: ""
+    DB_WRITE_PASSWORD: ""
+    PGDATA: "/data/pgdata"

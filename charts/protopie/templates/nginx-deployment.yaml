@@ -1,0 +1,223 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-conf
+data:
+  nginx.conf: |
+    #user nginx;
+    error_log  /var/log/nginx/error.log;
+    worker_processes  1;
+    events {
+      worker_connections  1024;
+    }
+
+    http {
+      client_max_body_size        3G;
+      client_header_timeout       600s;
+      client_body_timeout         600s;
+      proxy_connect_timeout       600s;
+      proxy_send_timeout          600s;
+      proxy_read_timeout          600s;
+      send_timeout                600s;
+
+      log_format  main
+              'remote_addr:$remote_addr\t'
+              'time_local:$time_local\t'
+              'method:$request_method\t'
+              'uri:$request_uri\t'
+              'host:$host\t'
+              'status:$status\t'
+              'bytes_sent:$body_bytes_sent\t'
+              'referer:$http_referer\t'
+              'useragent:$http_user_agent\t'
+              'forwardedfor:$http_x_forwarded_for\t'
+              'request_time:$request_time';
+      access_log  /var/log/nginx/access.log main;
+
+      include /etc/nginx/virtualhost/virtualhost.conf;
+    }
+  virtualhost.conf: |
+    upstream web_server {
+      server ent-cloud-web-svc.{{ .Release.Namespace }}.svc.cluster.local;
+    }
+
+    upstream user-research_server {
+      server ent-cloud-ur-svc.{{ .Release.Namespace }}.svc.cluster.local;
+    }
+
+    upstream api_server {
+      server ent-cloud-api-svc.{{ .Release.Namespace }}.svc.cluster.local;
+    }
+
+    {{- if .Values.analytics.enabled }}
+    upstream analytics-web_server {
+      server ent-analytics-web-svc.{{ .Release.Namespace }}.svc.cluster.local;
+    }
+
+    upstream analytics-api_server {
+      server ent-analytics-api-svc.{{ .Release.Namespace }}.svc.cluster.local;
+    }
+    {{- end }}
+
+    # gzip
+    gzip on;
+    gzip_proxied any;
+    gzip_comp_level 6;
+    gzip_buffers 16 8k;
+    gzip_http_version 1.1;
+    gzip_min_length 8192;
+    gzip_types  text/plain text/css application/json application/javascript
+                application/x-javascript text/xml application/xml
+                application/xml+rss text/javascript application/font-woff2
+                application/font-woff;
+    # security
+    add_header X-XSS-Protection "1; mode=block";
+    add_header Strict-Transport-Security "max-age=15768000";
+    server_tokens off;
+
+    # proxy
+    proxy_http_version 1.1;
+    proxy_redirect off;
+    proxy_set_header Host				$host;
+    proxy_set_header X-Real-IP			$remote_addr;
+    proxy_set_header X-Forwarded-For	$proxy_add_x_forwarded_for;
+    proxy_set_header X-NginX-Proxy      true;
+
+    # outdated agents
+    map $http_user_agent $outdated {
+        default                                                     0;
+        "~MSIE [1-9]\."                                             1;
+        "~MSIE 1[0-1]\."                                            1;
+        "~Trident/[5-7]\."                                          1;
+        "~Edge/1[0-7]\."                                            1;
+        "~Mozilla.*Firefox/5[0-9]\."                                1;
+        "~Mozilla.*Firefox/6[0-5]\."                                1;
+        "~Opera.*Version/2[0-9]\."                                  1;
+        "~Chrome/5[0-9]\."                                          1;
+        "~Chrome/6[0-3]\."                                          1;
+        "~.*(?=.Mac OS X).*(AppleWebKit.*Version\/[0-8]\..*Safari)" 1;
+    }
+
+    # For Websocket (User Research)
+    map $http_upgrade $connection_upgrade {
+        default upgrade;
+        '' close;
+    }
+
+    server {
+        listen 80;
+        # redirect to web
+        location / {
+            proxy_pass http://web_server;
+        }
+
+        # redirect to api
+        location /api {
+            proxy_set_header X-API-Prefix /api;
+            rewrite ^/api/?(.*) /$1 break;
+            proxy_pass http://api_server/;
+        }
+
+        location /api/v1 {
+            proxy_set_header X-API-Prefix /api/v1;
+            rewrite ^/api/v1/?(.*) /$1 break;
+            proxy_pass http://api_server/;
+        }
+
+        location /api/v2 {
+            proxy_set_header X-API-Prefix /api/v2;
+            rewrite ^/api/v2/?(.*) /$1 break;
+            proxy_pass http://api_server/;
+        }
+
+        # redirect to api - from Studio >=7.0
+        location /api/v3 {
+            proxy_set_header X-API-Prefix /api/v3;
+            rewrite ^/api/v3/?(.*) /$1 break;
+            proxy_pass http://api_server/;
+        }
+
+        location /user-research {
+            proxy_pass http://user-research_server;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection $connection_upgrade;
+        }
+
+        {{- if .Values.analytics.enabled }}
+        # analytics dashboard
+        location /analytics {
+            proxy_pass http://analytics-web_server/analytics;
+        }
+
+        location /api/analytics/ {
+            proxy_pass http://analytics-api_server/;
+        }
+        {{- end }}
+
+        # robots.txt
+        location = /robots.txt {
+            root /usr/share/nginx/html/nginx-html/;
+        }
+
+        # static pages
+        location ~ ^/(.well-known|outdated)/ {
+            root /usr/share/nginx/html/nginx-html/;
+        }
+
+        # redirect as outdated browser has been connected
+        if ($outdated = 1) {
+            rewrite ^ /outdated/outdated.html;
+        }
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.14.0-alpine
+        ports:
+          - name: http
+            containerPort: 80
+            protocol: TCP
+        livenessProbe:
+          httpGet:
+            path: /
+            port: http
+        readinessProbe:
+          httpGet:
+            path: /
+            port: http
+        volumeMounts:
+        - name: nginx-conf
+          mountPath: /etc/nginx # mount nginx-conf volume to /etc/nginx
+          readOnly: true
+        - name: log
+          mountPath: /var/log/nginx
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+      - name: nginx-conf
+        configMap:
+          name: nginx-conf # place ConfigMap `nginx-conf` on /etc/nginx
+          items:
+            - key: nginx.conf
+              path: nginx.conf
+            - key: virtualhost.conf
+              path: virtualhost/virtualhost.conf # dig directory
+      - name: log
+        emptyDir: {}

@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: enterprise-cloud-ur
+spec:
+  selector:
+    matchLabels:
+      app: ent-cloud-ur
+  template:
+    metadata:
+      labels:
+        app: ent-cloud-ur
+    spec:
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: ent-cloud-ur
+          image: "{{ .Values.image.userResearch.repository }}:{{ .Values.image.userResearch.tag }}"
+          env:
+            - name: API_URL
+              value: "http://ent-cloud-api-svc.{{ .Release.Namespace }}.svc.cluster.local"
+          ports:
+            - containerPort: 4444
+          volumeMounts:
+            - name: logs
+              mountPath: /app/logs
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "64Mi"
+            limits:
+              cpu: "1"
+              memory: "4Gi"
+      volumes:
+        - name: logs
+          hostPath:
+            path: /home/ec2-user/logs
+            type: DirectoryOrCreate
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ent-cloud-ur-svc
+spec:
+  selector:
+    app: ent-cloud-ur
+  ports:
+    - name: cloud-ur
+      port: 80
+      targetPort: 4444

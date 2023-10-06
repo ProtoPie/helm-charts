@@ -1,0 +1,111 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: enterprise-cloud-api
+  labels:
+    {{- include "protopie.labels" . | nindent 4 }}
+spec:
+  serviceName: ent-cloud-api-svc
+  replicas: 1
+  selector:
+    matchLabels:
+      app:  ent-cloud-api
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        app: ent-cloud-api
+    spec:
+      containers:
+        - name: ent-cloud-api
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.api.repository }}:{{ .Values.image.api.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: DB_HOST
+              value: {{ .Values.db.env.DB_HOST }}
+            - name: DB_PORT
+              value: !!str {{ .Values.db.env.DB_PORT | toString }}
+            - name: POSTGRES_USER
+              value: {{ .Values.db.env.POSTGRES_USER }}
+            - name: POSTGRES_PASSWORD
+              value: {{ .Values.db.env.POSTGRES_PASSWORD }}
+            - name: DB_DATABASE
+              value: {{ .Values.db.env.DB_DATABASE }}
+            - name: DB_READ_USER
+              value: {{ .Values.db.env.DB_READ_USER }}
+            - name: DB_WRITE_USER
+              value: {{ .Values.db.env.DB_WRITE_USER }}
+            - name: DB_READ_PASSWORD
+              value: {{ .Values.db.env.DB_READ_PASSWORD }}
+            - name: DB_WRITE_PASSWORD
+              value: {{ .Values.db.env.DB_WRITE_PASSWORD }}
+          ports:
+            - name: http
+              containerPort: 3333
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: logs
+              mountPath: /app/logs
+            - name: upload
+              mountPath: /app/upload
+            - name: download
+              mountPath: /app/download
+            - name: default
+              mountPath: /app/default
+            - name: config
+              mountPath: /app/resources
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        - name: logs
+          hostPath:
+            path: /home/ec2-user/logs
+            type: DirectoryOrCreate
+        - name: download
+          hostPath:
+            path: /home/ec2-user/download
+            type: DirectoryOrCreate
+        - name: default
+          hostPath:
+            path: /home/ec2-user/default
+            type: DirectoryOrCreate
+        - name: config
+          projected:
+            sources:
+              - configMap:
+                  name: config
+              - configMap:
+                  name: license
+  volumeClaimTemplates:
+  - metadata:
+      name: upload
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: {{ .Values.cloud.volumes.upload }}
