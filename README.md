@@ -8,7 +8,7 @@ helm repo add protopie https://protopie.github.io/helm-charts
 
 ## Install
 
-※ 반드시 
+**※ We only support https://www.protopie.io/plans/enterprise For license issuance, please contact https://www.protopie.io/form/enterprise-plan-contact-us.**
 
 ```console
 helm repo update
