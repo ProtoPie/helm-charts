@@ -11,6 +11,9 @@ image:
     web:
       repository: 310455165573.dkr.ecr.ap-northeast-2.amazonaws.com/enterprise-cloud
       tag: web-10.6.2
+    userResearch:
+      repository: 310455165573.dkr.ecr.ap-northeast-2.amazonaws.com/enterprise-cloud
+      tag: user-testing-10.5.0
   analytics:
     web:
       repository: 310455165573.dkr.ecr.ap-northeast-2.amazonaws.com/analytics-enterprise
@@ -21,8 +24,8 @@ image:
 
 ingress:
   enabled: false
-  certificateArn: arn:aws:acm:ap-northeast-2:794161565898:certificate/a887269c-15ad-45d3-84ed-11e89fd55163
-  host: dev-ee.protopie.works
+  host: ""
+  annotations: {}
 
 analytics:
   enabled: false

@@ -1,0 +1,15 @@
+ingress:
+  enabled: true
+  host: dev-ee.protopie.works
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/ssl-min-version: TLSV12
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80},{"HTTPS": 443}]'
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:ap-northeast-2:794161565898:certificate/a887269c-15ad-45d3-84ed-11e89fd55163
+    alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-FS-1-2-2019-08 # ELBSecurityPolicy-2016-08
+    external-dns.alpha.kubernetes.io/hostname: dev-ee.protopie.works
+
+analytics:
+  enabled: true

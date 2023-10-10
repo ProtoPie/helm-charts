@@ -6,14 +6,7 @@ metadata:
   labels:
     {{- include "protopie.labels" . | nindent 4 }}
   annotations:
-    kubernetes.io/ingress.class: alb
-    alb.ingress.kubernetes.io/scheme: internet-facing
-    alb.ingress.kubernetes.io/ssl-min-version: TLSV12
-    alb.ingress.kubernetes.io/target-type: ip
-    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80},{"HTTPS": 443}]'
-    alb.ingress.kubernetes.io/certificate-arn: {{ .Values.ingress.certificateArn }}
-    alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-FS-1-2-2019-08  # ELBSecurityPolicy-2016-08
-    external-dns.alpha.kubernetes.io/hostname: {{ .Values.ingress.host }}
+    {{- toYaml .Values.ingress.annotations | nindent 4 }}
 spec:
   rules:
     - host: {{ .Values.ingress.host }}
