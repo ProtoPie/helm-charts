@@ -23,7 +23,7 @@ spec:
         - name: ent-cloud-api
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
-          image: "{{ .Values.image.api.repository }}:{{ .Values.image.api.tag }}"
+          image: "{{ .Values.image.cloud.api.repository }}:{{ .Values.image.cloud.api.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
             - name: DB_HOST

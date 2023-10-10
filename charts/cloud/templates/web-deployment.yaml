@@ -13,6 +13,6 @@ spec:
     spec:
       containers:
         - name: ent-cloud-web
-          image: "{{ .Values.image.web.repository }}:{{ .Values.image.web.tag }}"
+          image: "{{ .Values.image.cloud.web.repository }}:{{ .Values.image.cloud.web.tag }}"
           ports:
             - containerPort: 3000
