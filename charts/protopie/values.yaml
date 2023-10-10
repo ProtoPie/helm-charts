@@ -7,10 +7,10 @@ image:
   cloud:
     api:
       repository: 310455165573.dkr.ecr.ap-northeast-2.amazonaws.com/enterprise-cloud
-      tag: api-10.4.0
+      tag: api-10.6.1
     web:
       repository: 310455165573.dkr.ecr.ap-northeast-2.amazonaws.com/enterprise-cloud
-      tag: web-10.4.0
+      tag: web-10.6.2
   analytics:
     web:
       repository: 310455165573.dkr.ecr.ap-northeast-2.amazonaws.com/analytics-enterprise
