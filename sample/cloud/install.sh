@@ -1,7 +1,9 @@
 #!/bin/bash
 
 helm repo update
-helm install my-release protopie/cloud -n my-namespace --create-namespace \
-    --set-file config.yml=config.yml \
-    --set-file license.pem license.pem \
+helm upgrade my-release protopie/cloud -n my-namespace \
+    --install \
+    --create-namespace \
+    --set-file cloud.config.yml=config.yml \
+    --set-file cloud.license.pem=license.pem \
     -f my.values.yaml

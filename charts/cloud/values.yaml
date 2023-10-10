@@ -47,9 +47,9 @@ cloud:
   volumes:
     upload: 10Gi
   config:
-    yml: "you can set content by --set-file config.yml=config.yml"
+    yml: "you can set content by --set-file cloud.config.yml=config.yml"
   license:
-    pem: "you can set content by --set-file license.pem license.pem"
+    pem: "you can set content by --set-file cloud.license.pem=license.pem"
   # Europ/Berlin 5 AM - UTC 3 AM - 0 3 * * *
   # America/NewYork 6 AM - UTC 10 AM - 0 10 * * *
   # America/California 3 AM - UTC 10 AM - 0 10 * * *

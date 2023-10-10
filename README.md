@@ -13,8 +13,8 @@ helm repo add protopie https://protopie.github.io/helm-charts
 ```console
 helm repo update
 helm install my-release protopie/cloud -n my-namespace \
-    --set-file config.yml=config.yml \
-    --set-file license.pem license.pem
+    --set-file cloud.config.yml=config.yml \
+    --set-file cloud.license.pem=license.pem
 ```
 
 ### With Ingress
