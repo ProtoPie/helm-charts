@@ -21,6 +21,7 @@ spec:
       containers:
       - name: ent-analytics-api
         image: "{{ .Values.image.analytics.api.repository }}:{{ .Values.image.analytics.api.tag }}"
+        imagePullPolicy: {{ .Values.image.analytics.api.pullPolicy }}
         env:
         - name: DB_HOST
           value: db

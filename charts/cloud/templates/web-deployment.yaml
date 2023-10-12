@@ -14,5 +14,6 @@ spec:
       containers:
         - name: ent-cloud-web
           image: "{{ .Values.image.cloud.web.repository }}:{{ .Values.image.cloud.web.tag }}"
+          imagePullPolicy: {{ .Values.image.cloud.web.pullPolicy }}
           ports:
             - containerPort: 3000

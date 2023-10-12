@@ -24,7 +24,7 @@ spec:
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.cloud.api.repository }}:{{ .Values.image.cloud.api.tag }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          imagePullPolicy: {{ .Values.image.cloud.api.pullPolicy }}
           env:
             - name: DB_HOST
               value: {{ .Values.db.env.DB_HOST }}

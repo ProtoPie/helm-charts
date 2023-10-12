@@ -18,6 +18,7 @@ spec:
       containers:
         - name: ent-cloud-ur
           image: "{{ .Values.image.cloud.userResearch.repository }}:{{ .Values.image.cloud.userResearch.tag }}"
+          imagePullPolicy: {{ .Values.image.cloud.userResearch.pullPolicy }}
           env:
             - name: API_URL
               value: "http://ent-cloud-api-svc.{{ .Release.Namespace }}.svc.cluster.local"

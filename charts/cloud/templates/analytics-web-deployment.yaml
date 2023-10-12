@@ -21,6 +21,7 @@ spec:
       containers:
       - name: ent-analytics-web
         image: "{{ .Values.image.analytics.web.repository }}:{{ .Values.image.analytics.web.tag }}"
+        imagePullPolicy: {{ .Values.image.analytics.web.pullPolicy }}
         env:
         - name: ANALYTICS_ENTERPRISE_API_URL
           value: "http://ent-analytics-api-svc.{{ .Release.Namespace }}.svc.cluster.local"
