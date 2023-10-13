@@ -1,0 +1,9 @@
+# Source: cloud/templates/protopie-private-registry-secret.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: protopie-private-registry
+  namespace: qa-ee
+type: kubernetes.io/dockerconfigjson
+data:
+  .dockerconfigjson: ""

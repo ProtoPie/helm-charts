@@ -18,14 +18,14 @@ spec:
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      {{- if .Values.imageCredentials }}
+      imagePullSecrets:
+      - name: protopie-private-registry
+      {{- end }}
       containers:
       - name: ent-analytics-api
         image: "{{ .Values.image.analytics.api.repository }}:{{ .Values.image.analytics.api.tag }}"
         imagePullPolicy: {{ .Values.image.analytics.api.pullPolicy }}
-        {{- if .Values.imageCredentials }}
-        imagePullSecrets:
-        - name: protopie-private-registry
-        {{- end }}
         env:
         - name: DB_HOST
           value: db
