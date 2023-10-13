@@ -3,6 +3,16 @@ entries:
   cloud:
   - apiVersion: v2
     appVersion: 10.6.2
+    created: "2023-10-13T09:16:36.044203187Z"
+    description: A Helm chart for Protopie Cloud
+    digest: e2c3d9ffcb7092af65226f71d5c932b5cbc0dd5e8cf55f89f0be428324f0ca20
+    name: cloud
+    type: application
+    urls:
+    - https://github.com/ProtoPie/helm-charts/releases/download/cloud-1.0.4/cloud-1.0.4.tgz
+    version: 1.0.4
+  - apiVersion: v2
+    appVersion: 10.6.2
     created: "2023-10-13T09:04:28.990248029Z"
     description: A Helm chart for Protopie Cloud
     digest: 8db1d3453678146abd5623e89a887017f579def71802fd63bf0e622f0a71819a
@@ -31,4 +41,4 @@ entries:
     urls:
     - https://github.com/ProtoPie/helm-charts/releases/download/cloud-1.0.1/cloud-1.0.1.tgz
     version: 1.0.1
-generated: "2023-10-13T09:04:28.990259629Z"
+generated: "2023-10-13T09:16:36.044224087Z"
