@@ -31,6 +31,13 @@ ingress:
   host: ""
   annotations: {}
 
+# eg) for private docker image registry (imagePullSecrets)
+# imageCredentials:
+#   registry: <repo>
+#   username: <username>
+#   password: <pw>
+imageCredentials: null
+
 analytics:
   enabled: false
   web:

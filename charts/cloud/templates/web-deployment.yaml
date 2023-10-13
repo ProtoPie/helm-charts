@@ -15,5 +15,9 @@ spec:
         - name: ent-cloud-web
           image: "{{ .Values.image.cloud.web.repository }}:{{ .Values.image.cloud.web.tag }}"
           imagePullPolicy: {{ .Values.image.cloud.web.pullPolicy }}
+          {{- if .Values.imageCredentials }}
+          imagePullSecrets:
+          - name: protopie-private-registry
+          {{- end }}
           ports:
             - containerPort: 3000
