@@ -36,6 +36,7 @@ ingress:
 #   registry: <repo>
 #   username: <username>
 #   password: <pw>
+#   email: <email>
 imageCredentials: null
 
 analytics:
