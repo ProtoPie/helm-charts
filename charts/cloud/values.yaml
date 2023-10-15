@@ -37,7 +37,12 @@ ingress:
 #   username: <username>
 #   password: <pw>
 #   email: <email>
+# OR
+# imagePullSecrets:
+#   - name: <protopie-private-registry>
+
 imageCredentials: null
+imagePullSecrets: null
 
 analytics:
   enabled: false

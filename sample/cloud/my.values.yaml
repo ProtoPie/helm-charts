@@ -13,3 +13,6 @@ ingress:
 
 analytics:
   enabled: true
+
+imagePullSecrets:
+  - name: protopie-private-registry

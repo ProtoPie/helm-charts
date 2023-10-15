@@ -19,7 +19,10 @@ spec:
       labels:
         app: ent-cloud-api
     spec:
-      {{- if .Values.imageCredentials }}
+      {{- if .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- .Values.imagePullSecrets | toYaml | nindent 8 }}
+      {{- else if .Values.imageCredentials }}
       imagePullSecrets:
       - name: protopie-private-registry
       {{- end }}
