@@ -3,7 +3,7 @@ kind: CronJob
 metadata:
   name: {{ include "aws-ecr-credential.cronJob" . }}
   labels:
-{{ include "aws-ecr-credential.labels" . | indent 4 }}
+    {{- include "aws-ecr-credential.labels" . | nindent 4 }}
 spec:
   schedule: "* */8 * * *"
   successfulJobsHistoryLimit: 2
