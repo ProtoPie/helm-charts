@@ -2,4 +2,4 @@ Run the following command to see the aws-registry secret:
 
     kubectl describe secret aws-registry
 
-kubectl create job --from=cronjob/{{ .Values.aws-ecr-credential.cronJob }} aws-ecr-credential-manual-001
+kubectl create job --from=cronjob/cronJob aws-ecr-credential-manual-001

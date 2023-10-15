@@ -4,6 +4,6 @@ description: This Chart seemlessly integrates Kubernetes with AWS ECR
 
 type: application
 
-version: 1.4.2
+version: 1.4.3
 
-appVersion: "1.4.2"
+appVersion: "1.4.3"
