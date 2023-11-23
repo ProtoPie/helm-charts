@@ -8,9 +8,10 @@ targetNamespace: default
 aws:
   account: ""
   region: ""
-  accessKeyId: ""        # base64
-  secretAccessKey: ""    # base64
+  accessKeyId: "" # base64
+  secretAccessKey: "" # base64
 
 jobImage: architectminds/aws-kubectl
 jobImageTag: 1.1
 
+podLabels: {}
