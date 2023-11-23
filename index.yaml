@@ -3,6 +3,16 @@ entries:
   aws-ecr-credential:
   - apiVersion: v2
     appVersion: 1.0.0
+    created: "2023-11-23T02:28:21.285034995Z"
+    description: This Chart seemlessly integrates Kubernetes with AWS ECR
+    digest: 3d8e0be0540644fbd08b70798c87bb2199a0b3daf2ea17340c82a26ed279aae5
+    name: aws-ecr-credential
+    type: application
+    urls:
+    - https://github.com/ProtoPie/helm-charts/releases/download/aws-ecr-credential-1.4.5/aws-ecr-credential-1.4.5.tgz
+    version: 1.4.5
+  - apiVersion: v2
+    appVersion: 1.0.0
     created: "2023-10-15T10:55:24.944391119Z"
     description: This Chart seemlessly integrates Kubernetes with AWS ECR
     digest: 309d34b118f6c20295534828f95092c5d1824a48b295daf49e34ab2b914572b4
@@ -102,4 +112,4 @@ entries:
     urls:
     - https://github.com/ProtoPie/helm-charts/releases/download/cloud-1.0.1/cloud-1.0.1.tgz
     version: 1.0.1
-generated: "2023-11-23T01:41:52.660166086Z"
+generated: "2023-11-23T02:28:21.285068247Z"
