@@ -13,5 +13,3 @@ aws:
 
 jobImage: architectminds/aws-kubectl
 jobImageTag: 1.1
-
-podLabels: {}
