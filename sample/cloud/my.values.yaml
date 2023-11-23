@@ -16,3 +16,11 @@ analytics:
 
 imagePullSecrets:
   - name: protopie-private-registry
+
+cloud:
+  envs:
+    - name: SECRET_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: mysecret
+          key: password

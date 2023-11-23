@@ -1,7 +1,9 @@
 #!/bin/bash
 
 helm repo update
-helm upgrade my-release ../../charts/cloud -n my-namespace \
+helm upgrade my-release ../../charts/cloud \
+    --dry-run \
+    -n my-namespace \
     --install \
     --dry-run \
     --create-namespace \

@@ -51,6 +51,9 @@ spec:
               value: {{ .Values.db.env.DB_READ_PASSWORD }}
             - name: DB_WRITE_PASSWORD
               value: {{ .Values.db.env.DB_WRITE_PASSWORD }}
+            {{- with .Values.cloud.envs }}
+              {{- toYaml . | nindent 12 }}
+            {{- end }}
           ports:
             - name: http
               containerPort: 3333

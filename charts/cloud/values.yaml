@@ -7,15 +7,15 @@ image:
     api:
       pullPolicy: IfNotPresent
       repository: 310455165573.dkr.ecr.ap-northeast-2.amazonaws.com/enterprise-cloud
-      tag: api-10.6.1
+      tag: api-11.0.1
     web:
       pullPolicy: IfNotPresent
       repository: 310455165573.dkr.ecr.ap-northeast-2.amazonaws.com/enterprise-cloud
-      tag: web-10.6.2
+      tag: web-11.0.1
     userResearch:
       pullPolicy: IfNotPresent
       repository: 310455165573.dkr.ecr.ap-northeast-2.amazonaws.com/enterprise-cloud
-      tag: user-testing-10.5.0
+      tag: user-testing-11.0.1
   analytics:
     web:
       pullPolicy: IfNotPresent
