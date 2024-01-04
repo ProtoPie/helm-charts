@@ -44,6 +44,9 @@ ingress:
 imageCredentials: null
 imagePullSecrets: null
 
+userResearch:
+  enabled: true
+
 analytics:
   enabled: false
   web:
@@ -61,8 +64,12 @@ analytics:
       ALLOWED_HOSTS: "*"
 
 cloud:
+  api:
+    replicas: 1
+  web:
+    replicas: 1
   volumes:
-    upload: 10Gi
+    upload: 50Gi
   config:
     yml: "you can set content by --set-file cloud.config.yml=config.yml"
   license:
@@ -73,6 +80,9 @@ cloud:
   # Asia/Mumbai 5 AM - UTC 11:30 PM - 30 11 * * *
   # Asia/Seoul 5 AM - UTC 20 PM - 0 20 * * *
   cleanUpSchedule: "* 20 * * *"
+
+nginx:
+  replicas: 1
 
 db:
   volume: 20Gi
