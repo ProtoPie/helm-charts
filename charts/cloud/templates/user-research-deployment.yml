@@ -1,3 +1,4 @@
+{{- if .Values.userResearch.enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -59,3 +60,4 @@ spec:
     - name: cloud-ur
       port: 80
       targetPort: 4444
+{{- end }}

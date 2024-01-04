@@ -6,6 +6,7 @@ spec:
   selector:
     matchLabels:
       app: ent-cloud-web
+  replicas: {{ .Values.cloud.web.replicas }}
   template:
     metadata:
       labels:

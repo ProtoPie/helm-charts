@@ -25,12 +25,19 @@ image:
       tag: web-11.0.5
 
 cloud:
+  api:
+    replicas: 2
+  web:
+    replicas: 2
   # Europ/Berlin 5 AM - UTC 3 AM - 0 3 * * *
   # America/NewYork 6 AM - UTC 10 AM - 0 10 * * *
   # America/California 3 AM - UTC 10 AM - 0 10 * * *
   # Asia/Mumbai 5 AM - UTC 11:30 PM - 30 11 * * *
   # Asia/Seoul 5 AM - UTC 20 PM - 0 20 * * *
   cleanUpSchedule: "* 20 * * *"
+
+nginx:
+  replicas: 2
 
 analytics:
   enabled: false # This feature is a closed alpha, there are no public images

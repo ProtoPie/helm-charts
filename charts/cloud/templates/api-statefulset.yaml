@@ -6,7 +6,7 @@ metadata:
     {{- include "protopie.labels" . | nindent 4 }}
 spec:
   serviceName: ent-cloud-api-svc
-  replicas: 1
+  replicas: {{ .Values.cloud.api.replicas }}
   selector:
     matchLabels:
       app:  ent-cloud-api
@@ -111,11 +111,19 @@ spec:
                   name: config
               - configMap:
                   name: license
-  volumeClaimTemplates:
-  - metadata:
-      name: upload
-    spec:
-      accessModes: [ "ReadWriteOnce" ]
-      resources:
-        requests:
-          storage: {{ .Values.cloud.volumes.upload }}
+        - name: upload
+          persistentVolumeClaim:
+            claimName: upload-enterprise-cloud-api
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  labels:
+    app: ent-cloud-api
+  name: upload-enterprise-cloud-api
+spec:
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: {{ .Values.cloud.volumes.upload }}
