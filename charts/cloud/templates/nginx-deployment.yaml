@@ -285,8 +285,8 @@ spec:
           name: html
           items:
             - key: appleAppSiteAssociation
-              path: apple-app-site-association
+              path: .well-known/apple-app-site-association
             - key: assetlinks.json
-              path: assetlinks.json
+              path: .well-known/assetlinks.json
       - name: log
         emptyDir: {}
