@@ -131,7 +131,6 @@ data:
 
     server {
         listen 80;
-        server_name {{ .Values.cloud.host }};
         # redirect to web
         location / {
             proxy_pass http://web_server;
@@ -266,6 +265,8 @@ spec:
           readOnly: true
         - name: html
           mountPath: /usr/share/nginx/html
+        - name: html
+          mountPath: /usr/share/nginx/html/nginx-html
         - name: log
           mountPath: /var/log/nginx
       {{- with .Values.nodeSelector }}
