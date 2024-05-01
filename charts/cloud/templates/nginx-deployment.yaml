@@ -112,11 +112,6 @@ data:
         listen 80;
         server_name {{ .Values.cloud.share.host }};
 
-        # redirect to web - from Pie Share
-        location / {
-            rewrite ^/?(.*)$ https://{{ .Values.cloud.host }}/p/$1 permanent;
-        }
-
         # robots.txt
         location = /robots.txt {
             root /usr/share/nginx/html/;
@@ -127,6 +122,10 @@ data:
             root /usr/share/nginx/html/;
         }
 
+        # redirect to web - from Pie Share
+        location / {
+            rewrite ^/?(.*)$ https://{{ .Values.cloud.host }}/p/$1 permanent;
+        }
     }
     {{- end }}
 
