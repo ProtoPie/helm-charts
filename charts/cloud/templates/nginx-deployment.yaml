@@ -203,8 +203,8 @@ kind: ConfigMap
 metadata:
   name: html
 data:
-  appleAppSiteAssociation: {{ default '' .Values.cloud.share.appleAppSiteAssociation }}
-  assetlinks.json: {{ default '' .Values.cloud.share.assetlinksJson }}
+  appleAppSiteAssociation: {{ default "" .Values.cloud.share.appleAppSiteAssociation }}
+  assetlinks.json: {{ default "" .Values.cloud.share.assetlinksJson }}
 ---
 apiVersion: apps/v1
 kind: Deployment
