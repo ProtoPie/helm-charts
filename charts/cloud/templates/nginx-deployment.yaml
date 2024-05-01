@@ -203,7 +203,7 @@ kind: ConfigMap
 metadata:
   name: html
 data:
-  apple-app-site-association: {{ default '' .Values.cloud.share.appleAppSiteAssociation }}
+  appleAppSiteAssociation: {{ default '' .Values.cloud.share.appleAppSiteAssociation }}
   assetlinks.json: {{ default '' .Values.cloud.share.assetlinksJson }}
 ---
 apiVersion: apps/v1
@@ -256,12 +256,13 @@ spec:
               path: nginx.conf
             - key: virtualhost.conf
               path: virtualhost/virtualhost.conf # dig directory
-            - key: apple-app-site-association
-              path: apple-app-site-association
-            - key: assetlinks.json
-              path: assetlinks.json
       - name: html
         configMap:
           name: html
+          items:
+            - key: appleAppSiteAssociation
+              path: apple-app-site-association
+            - key: assetlinks.json
+              path: assetlinks.json
       - name: log
         emptyDir: {}
