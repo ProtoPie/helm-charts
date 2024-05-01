@@ -106,29 +106,6 @@ data:
         '' close;
     }
 
-    {{- if .Values.cloud.share.enabled }}
-    server {
-        #
-        listen 80;
-        server_name {{ .Values.cloud.share.host }};
-
-        # robots.txt
-        location = /robots.txt {
-            root /usr/share/nginx/html/;
-        }
-
-        # static pages
-        location ~ ^/(.well-known|outdated)/ {
-            root /usr/share/nginx/html/;
-        }
-
-        # redirect to web - from Pie Share
-        location / {
-            rewrite ^/?(.*)$ https://{{ .Values.cloud.host }}/p/$1 permanent;
-        }
-    }
-    {{- end }}
-
     server {
         listen 80;
         # redirect to web
@@ -197,6 +174,29 @@ data:
             rewrite ^ /outdated/outdated.html;
         }
     }
+
+    {{- if .Values.cloud.share.enabled }}
+    server {
+        #
+        listen 80;
+        server_name {{ .Values.cloud.share.host }};
+
+        # robots.txt
+        location = /robots.txt {
+            root /usr/share/nginx/html/;
+        }
+
+        # static pages
+        location ~ ^/(.well-known|outdated)/ {
+            root /usr/share/nginx/html/;
+        }
+
+        # redirect to web - from Pie Share
+        location / {
+            rewrite ^/?(.*)$ https://{{ .Values.cloud.host }}/p/$1 permanent;
+        }
+    }
+    {{- end }}
 ---
 apiVersion: v1
 kind: ConfigMap
