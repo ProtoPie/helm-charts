@@ -68,8 +68,6 @@ cloud:
   share:
     enabled: false
     host: ""
-    appleAppSiteAssociation: ""
-    assetlinksJson: ""
   api:
     replicas: 1
   web:
