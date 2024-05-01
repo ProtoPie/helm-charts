@@ -122,15 +122,16 @@ data:
             root /usr/share/nginx/html/;
         }
 
-        # redirect to web - from Pie Share
-        location / {
-            rewrite ^/?(.*)$ https://{{ .Values.cloud.host }}/p/$1 permanent;
-        }
+        # # redirect to web - from Pie Share
+        # location / {
+        #     rewrite ^/?(.*)$ https://{{ .Values.cloud.host }}/p/$1 permanent;
+        # }
     }
     {{- end }}
 
     server {
         listen 80;
+        server_name {{ .Values.cloud.host }};
         # redirect to web
         location / {
             proxy_pass http://web_server;
