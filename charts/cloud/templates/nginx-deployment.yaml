@@ -4,7 +4,7 @@ metadata:
   name: nginx-conf
 data:
   nginx.conf: |
-    #user nginx;
+    #user root;
     error_log  /var/log/nginx/error.log;
     worker_processes  1;
     events {
