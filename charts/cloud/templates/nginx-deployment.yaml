@@ -122,10 +122,10 @@ data:
             root /usr/share/nginx/html/;
         }
 
-        # # redirect to web - from Pie Share
-        # location / {
-        #     rewrite ^/?(.*)$ https://{{ .Values.cloud.host }}/p/$1 permanent;
-        # }
+        # redirect to web - from Pie Share
+        location / {
+            rewrite ^/?(.*)$ https://{{ .Values.cloud.host }}/p/$1 permanent;
+        }
     }
     {{- end }}
 
@@ -265,8 +265,6 @@ spec:
           readOnly: true
         - name: html
           mountPath: /usr/share/nginx/html
-        - name: html
-          mountPath: /usr/share/nginx/html/nginx-html
         - name: log
           mountPath: /var/log/nginx
       {{- with .Values.nodeSelector }}
