@@ -41,10 +41,12 @@ data:
       server ent-cloud-web-svc.{{ .Release.Namespace }}.svc.cluster.local;
     }
 
-    {{- if .Values.userResearch.enabled }}
+    {{- if and .Values.userResearch.enabled ( not .Values.userResearch.renewal ) }}
     upstream user-research_server {
       server ent-cloud-ur-svc.{{ .Release.Namespace }}.svc.cluster.local;
     }
+    {{- end }}
+    {{- if and .Values.userResearch.enabled .Values.userResearch.renewal }}
     upstream user-testing-api_server {
       server ent-cloud-ut-svc.{{ .Release.Namespace }}.svc.cluster.local;
     }
