@@ -1,16 +1,16 @@
-{{- if .Values.userResearch.enabled and not .Values.userResearch.renewal }}
+{{- if .Values.userResearch.enabled and .Values.userResearch.renewal }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: enterprise-cloud-ur
+  name: ent-cloud-ut
 spec:
   selector:
     matchLabels:
-      app: ent-cloud-ur
+      app: ent-cloud-ut
   template:
     metadata:
       labels:
-        app: ent-cloud-ur
+        app: ent-cloud-ut
     spec:
       {{- with .Values.nodeSelector }}
       nodeSelector:
@@ -24,14 +24,15 @@ spec:
       - name: protopie-private-registry
       {{- end }}
       containers:
-        - name: ent-cloud-ur
-          image: "{{ .Values.image.cloud.userResearch.repository }}:{{ .Values.image.cloud.userResearch.tag }}"
+        - name: ent-cloud-ut
+          image: "{{ .Values.image.cloud.userResearch.repository }}:{{ .Values.image.cloud.userResearch.renwalTag }}"
           imagePullPolicy: {{ .Values.image.cloud.userResearch.pullPolicy }}
           env:
             - name: API_URL
               value: "http://ent-cloud-api-svc.{{ .Release.Namespace }}.svc.cluster.local"
           ports:
             - containerPort: 4444
+            - containerPort: 4445
           volumeMounts:
             - name: logs
               mountPath: /app/logs
@@ -52,12 +53,15 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: ent-cloud-ur-svc
+  name: ent-cloud-ut-svc
 spec:
   selector:
-    app: ent-cloud-ur
+    app: ent-cloud-ut
   ports:
-    - name: cloud-ur
+    - name: cloud-ut-api
       port: 80
       targetPort: 4444
+    - name: cloud-ut-socket
+      port: 8081
+      targetPort: 4445
 {{- end }}

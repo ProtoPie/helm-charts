@@ -46,6 +46,7 @@ imagePullSecrets: null
 
 userResearch:
   enabled: true
+  renewal: false
 
 analytics:
   enabled: false

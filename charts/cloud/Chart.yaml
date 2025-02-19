@@ -4,6 +4,6 @@ description: A Helm chart for Protopie Cloud
 
 type: application
 
-version: 2.1.12
+version: 2.1.13
 
 appVersion: "13.0.3"
