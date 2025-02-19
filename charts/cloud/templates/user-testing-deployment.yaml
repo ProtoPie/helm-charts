@@ -30,6 +30,12 @@ spec:
           env:
             - name: API_URL
               value: "http://ent-cloud-api-svc.{{ .Release.Namespace }}.svc.cluster.local"
+            - name: HOST
+              value: 0.0.0.0
+            - name: SOCKETIO_HOST
+              value: 0.0.0.0
+            - name: KTOR_ENV
+              value: production
           ports:
             - containerPort: 4444
             - containerPort: 4445
