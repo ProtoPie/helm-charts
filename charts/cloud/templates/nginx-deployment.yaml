@@ -157,14 +157,14 @@ data:
         {{- if and .Values.userResearch.enabled .Values.userResearch.renewal }}
         location ^~ /user-research/socket {
             rewrite ^/user-research/(.*)$ /$1 break;
-            proxy_pass http://user_testing_socket_server;
+            proxy_pass http://user-testing-socket_server;
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection $connection_upgrade;
         }
 
         location ^~ /user-research {
             rewrite ^/user-research/(.*)$ /$1 break;
-            proxy_pass http://user_testing_api_server;
+            proxy_pass http://user-testing-api_server;
         }
         {{ end }}
 
