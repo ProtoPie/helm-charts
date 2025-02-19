@@ -25,7 +25,7 @@ spec:
       {{- end }}
       containers:
         - name: ent-cloud-ut
-          image: "{{ .Values.image.cloud.userResearch.repository }}:{{ .Values.image.cloud.userResearch.renwalTag }}"
+          image: "{{ .Values.image.cloud.userResearch.repository }}:{{ .Values.image.cloud.userResearch.tag }}"
           imagePullPolicy: {{ .Values.image.cloud.userResearch.pullPolicy }}
           env:
             - name: API_URL
