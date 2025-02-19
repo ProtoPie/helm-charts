@@ -145,7 +145,7 @@ data:
             proxy_pass http://api_server/;
         }
 
-        {{- if .Values.userResearch.enabled and not .Values.userResearch.renewal }}
+        {{- if and .Values.userResearch.enabled ( not .Values.userResearch.renewal ) }}
         location /user-research {
             proxy_pass http://user-research_server;
             proxy_http_version 1.1;
@@ -154,7 +154,7 @@ data:
         }
         {{- end }}
 
-        {{- if .Values.userResearch.enabled and .Values.userResearch.renewal }}
+        {{- if and .Values.userResearch.enabled .Values.userResearch.renewal }}
         location ^~ /user-research/socket {
             rewrite ^/user-research/(.*)$ /$1 break;
             proxy_pass http://user_testing_socket_server;

@@ -1,4 +1,4 @@
-{{- if .Values.userResearch.enabled and .Values.userResearch.renewal }}
+{{- if and .Values.userResearch.enabled .Values.userResearch.renewal }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
