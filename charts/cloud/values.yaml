@@ -6,12 +6,12 @@ image:
   cloud:
     api:
       pullPolicy: IfNotPresent
-      repository: 310455165573.dkr.ecr.ap-northeast-2.amazonaws.com/enterprise-cloud
-      tag: api-11.0.1
+      repository: protopie/enterprise-onpremises
+      tag: api-15.2.0
     web:
       pullPolicy: IfNotPresent
-      repository: 310455165573.dkr.ecr.ap-northeast-2.amazonaws.com/enterprise-cloud
-      tag: web-11.0.1
+      repository: protopie/enterprise-onpremises
+      tag: web-15.2.0
     userResearch:
       pullPolicy: IfNotPresent
       repository: 310455165573.dkr.ecr.ap-northeast-2.amazonaws.com/enterprise-cloud
@@ -45,7 +45,7 @@ imageCredentials: null
 imagePullSecrets: null
 
 userResearch:
-  enabled: true
+  enabled: false
   renewal: false
 
 analytics:
