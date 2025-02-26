@@ -123,7 +123,10 @@ metadata:
   name: upload-enterprise-cloud-api
 spec:
   accessModes:
-  - ReadWriteMany
+  - {{ .Values.cloud.volumes.accessMode | default "ReadWriteMany" | quote }}
   resources:
     requests:
       storage: {{ .Values.cloud.volumes.upload }}
+  {{- if .Values.cloud.volumes.storageClassName }}
+  storageClassName: {{ .Values.cloud.volumes.storageClassName }}
+  {{- end }}
