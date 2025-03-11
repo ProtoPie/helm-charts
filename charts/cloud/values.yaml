@@ -79,7 +79,16 @@ cloud:
   web:
     replicas: 1
   volumes:
+    # If left empty, the default storage class will be used
+    storageClassName: ""
+    # Default accessMode is ReadWriteMany
+    accessMode: ""
+    # Enable to use PVCs instead of HostPath volumes
+    usePVC: false
     upload: 50Gi
+    logs: 5Gi
+    download: 10Gi
+    default: 10Gi
     # If left empty, the default storage class will be used
     storageClassName: ""
     # Default accessMode is ReadWriteMany
