@@ -9,7 +9,7 @@ spec:
   replicas: {{ .Values.cloud.api.replicas }}
   selector:
     matchLabels:
-      app:  ent-cloud-api
+      app: ent-cloud-api
   template:
     metadata:
       {{- with .Values.podAnnotations }}
@@ -92,6 +92,17 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       volumes:
+        {{- if .Values.cloud.volumes.usePVC }}
+        - name: logs
+          persistentVolumeClaim:
+            claimName: logs-enterprise-cloud-api
+        - name: download
+          persistentVolumeClaim:
+            claimName: download-enterprise-cloud-api
+        - name: default
+          persistentVolumeClaim:
+            claimName: default-enterprise-cloud-api
+        {{- else }}
         - name: logs
           hostPath:
             path: /home/ec2-user/logs
@@ -104,6 +115,7 @@ spec:
           hostPath:
             path: /home/ec2-user/default
             type: DirectoryOrCreate
+        {{- end }}
         - name: config
           projected:
             sources:
@@ -114,7 +126,9 @@ spec:
         - name: upload
           persistentVolumeClaim:
             claimName: upload-enterprise-cloud-api
+
 ---
+
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -130,3 +144,59 @@ spec:
   {{- if .Values.cloud.volumes.storageClassName }}
   storageClassName: {{ .Values.cloud.volumes.storageClassName }}
   {{- end }}
+
+---
+
+{{- if .Values.cloud.volumes.usePVC }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  labels:
+    app: ent-cloud-api
+  name: logs-enterprise-cloud-api
+spec:
+  accessModes:
+    - {{ .Values.cloud.volumes.accessMode | default "ReadWriteMany" | quote }}
+  resources:
+    requests:
+      storage: {{ .Values.cloud.volumes.logs | default "1Gi" }}
+  {{- if .Values.cloud.volumes.storageClassName }}
+  storageClassName: {{ .Values.cloud.volumes.storageClassName }}
+  {{- end }}
+
+---
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  labels:
+    app: ent-cloud-api
+  name: download-enterprise-cloud-api
+spec:
+  accessModes:
+    - {{ .Values.cloud.volumes.accessMode | default "ReadWriteMany" | quote }}
+  resources:
+    requests:
+      storage: {{ .Values.cloud.volumes.download | default "1Gi" }}
+  {{- if .Values.cloud.volumes.storageClassName }}
+  storageClassName: {{ .Values.cloud.volumes.storageClassName }}
+  {{- end }}
+
+---
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  labels:
+    app: ent-cloud-api
+  name: default-enterprise-cloud-api
+spec:
+  accessModes:
+    - {{ .Values.cloud.volumes.accessMode | default "ReadWriteMany" | quote }}
+  resources:
+    requests:
+      storage: {{ .Values.cloud.volumes.default | default "1Gi" }}
+  {{- if .Values.cloud.volumes.storageClassName }}
+  storageClassName: {{ .Values.cloud.volumes.storageClassName }}
+  {{- end }}
+{{- end }}
