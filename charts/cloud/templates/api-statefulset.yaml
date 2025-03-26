@@ -34,23 +34,50 @@ spec:
           imagePullPolicy: {{ .Values.image.cloud.api.pullPolicy }}
           env:
             - name: DB_HOST
-              value: {{ .Values.db.env.DB_HOST }}
+              valueFrom:
+                secretKeyRef:
+                  name: db-config
+                  key: host
             - name: DB_PORT
-              value: !!str {{ .Values.db.env.DB_PORT | toString }}
-            - name: POSTGRES_USER
-              value: {{ .Values.db.env.POSTGRES_USER }}
-            - name: POSTGRES_PASSWORD
-              value: {{ .Values.db.env.POSTGRES_PASSWORD }}
+              valueFrom:
+                secretKeyRef:
+                  name: db-config
+                  key: port
+            - name: POSTGRESQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: username
+            - name: POSTGRESQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: password
             - name: DB_DATABASE
-              value: {{ .Values.db.env.DB_DATABASE }}
+              valueFrom:
+                configMapKeyRef:
+                  name: db-config
+                  key: database
             - name: DB_READ_USER
-              value: {{ .Values.db.env.DB_READ_USER }}
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: read-user
             - name: DB_WRITE_USER
-              value: {{ .Values.db.env.DB_WRITE_USER }}
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: write-user
             - name: DB_READ_PASSWORD
-              value: {{ .Values.db.env.DB_READ_PASSWORD }}
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: read-password
             - name: DB_WRITE_PASSWORD
-              value: {{ .Values.db.env.DB_WRITE_PASSWORD }}
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: write-password
             {{- with .Values.cloud.envs }}
               {{- toYaml . | nindent 12 }}
             {{- end }}
@@ -141,8 +168,8 @@ spec:
   resources:
     requests:
       storage: {{ .Values.cloud.volumes.upload }}
-  {{- if .Values.cloud.volumes.storageClassName }}
-  storageClassName: {{ .Values.cloud.volumes.storageClassName }}
+  {{- with .Values.cloud.volumes.storageClassName }}
+  storageClassName: {{ . }}
   {{- end }}
 
 ---
