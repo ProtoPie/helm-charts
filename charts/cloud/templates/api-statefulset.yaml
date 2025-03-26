@@ -35,12 +35,12 @@ spec:
           env:
             - name: DB_HOST
               valueFrom:
-                secretKeyRef:
+                configMapKeyRef:
                   name: db-config
                   key: host
             - name: DB_PORT
               valueFrom:
-                secretKeyRef:
+                configMapKeyRef:
                   name: db-config
                   key: port
             - name: POSTGRESQL_USER
