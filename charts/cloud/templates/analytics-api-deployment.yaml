@@ -31,15 +31,30 @@ spec:
         imagePullPolicy: {{ .Values.image.analytics.api.pullPolicy }}
         env:
         - name: DB_HOST
-          value: db
-        - name: DB_NAME
-          value: {{ .Values.db.env.DB_DATABASE_ANALYTICS }}
-        - name: DB_USER
-          value: {{ .Values.db.env.DB_WRITE_USER }}
+          valueFrom:
+            configMapKeyRef:
+              name: db-config
+              key: host
         - name: DB_PORT
-          value: !!str {{ .Values.db.env.DB_PORT | toString }}
+          valueFrom:
+            configMapKeyRef:
+              name: db-config
+              key: port
+        - name: DB_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: db-config
+              key: analytics-database
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: write-user
         - name: DB_PASSWORD
-          value: {{ .Values.db.env.DB_READ_PASSWORD }}
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: write-password
         - name: DJANGO_SECRET_KEY
           value: {{ .Values.analytics.api.env.DJANGO_SECRET_KEY }}
         - name: ROOT_PATH
