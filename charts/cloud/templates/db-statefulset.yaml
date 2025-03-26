@@ -1,3 +1,4 @@
+{{- if not .Values.postgresql.enabled }}
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -15,32 +16,55 @@ spec:
     spec:
       containers:
       - name:  db
-        image: postgres:10.5-alpine
+        image: "{{ .Values.image.db.repository }}:{{ .Values.image.db.tag }}"
+        imagePullPolicy: {{ .Values.image.db.pullPolicy }}
         ports:
         - containerPort: 5432
           name:  db
         env:
-        - name: POSTGRES_USER
-          value: {{ .Values.db.env.POSTGRES_USER }}
-        - name: POSTGRES_PASSWORD
-          value: {{ .Values.db.env.POSTGRES_PASSWORD }}
+        - name: POSTGRESQL_USER
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: username
+        - name: POSTGRESQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: password
         - name: DB_DATABASE
-          value: {{ .Values.db.env.DB_DATABASE }}
+          valueFrom:
+            configMapKeyRef:
+              name: db-config
+              key: database
         - name: DB_DATABASE_ANALYTICS
-          value: {{ .Values.db.env.DB_DATABASE_ANALYTICS }}
+          valueFrom:
+            configMapKeyRef:
+              name: db-config
+              key: analytics-database
         - name: DB_READ_USER
-          value: {{ .Values.db.env.DB_READ_USER }}
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: read-user
         - name: DB_WRITE_USER
-          value: {{ .Values.db.env.DB_WRITE_USER }}
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: write-user
         - name: DB_READ_PASSWORD
-          value: {{ .Values.db.env.DB_READ_PASSWORD }}
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: read-password
         - name: DB_WRITE_PASSWORD
-          value: {{ .Values.db.env.DB_WRITE_PASSWORD }}
-        - name: PGDATA
-          value: {{ .Values.db.env.PGDATA }}
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: write-password
         volumeMounts:
         - name: pg-data
-          mountPath: /data
+          mountPath: /bitnami/postgresql/data
         - name: db-initialize
           mountPath: /docker-entrypoint-initdb.d
       volumes:
@@ -62,3 +86,4 @@ spec:
       {{- if .Values.db.storageClassName }}
       storageClassName: {{ .Values.db.storageClassName }}
       {{- end }}
+{{- end }}

@@ -20,6 +20,10 @@ image:
     pullPolicy: IfNotPresent
     repository: nginx
     tag: nginx-1.26.3-alpine
+  db:
+    pullPolicy: IfNotPresent
+    repository: bitnami/postgres
+    tag: 14.15.0
   analytics:
     web:
       pullPolicy: IfNotPresent
@@ -121,4 +125,25 @@ db:
     DB_WRITE_USER: protopie_w
     DB_READ_PASSWORD: ""
     DB_WRITE_PASSWORD: ""
-    PGDATA: "/data/pgdata"
+
+postgresql:
+  enabled: false
+  image:
+    tag: 14.15.0
+  auth:
+    username: postgres
+    password: postgres
+    database: proteam
+  service:
+    ports:
+      postgresql: 5432
+  primary:
+    nodeSelector: *nodeSelector
+    initdb:
+      scriptsConfigMap: postgres-init-script-configmap
+    # If left empty, the default storage class will be used
+    storageClassName: ""
+    persistence:
+      size: 20G
+    persistentVolumeClaimRetentionPolicy:
+      enabled: true
