@@ -1,4 +1,4 @@
-nodeSelector: {}
+nodeSelector: &nodeSelector {}
 podAnnotations:
   app: protopie
 
@@ -7,15 +7,15 @@ image:
     api:
       pullPolicy: IfNotPresent
       repository: protopie/enterprise-onpremises
-      tag: api-15.2.0
+      tag: api-15.3.1
     web:
       pullPolicy: IfNotPresent
       repository: protopie/enterprise-onpremises
-      tag: web-15.2.0
-    userResearch:
+      tag: web-15.3.1
+    userTesting:
       pullPolicy: IfNotPresent
       repository: 310455165573.dkr.ecr.ap-northeast-2.amazonaws.com/enterprise-cloud
-      tag: user-testing-11.0.1
+      tag: user-testing-15.3.1
   analytics:
     web:
       pullPolicy: IfNotPresent
@@ -49,9 +49,8 @@ ingress:
 imageCredentials: null
 imagePullSecrets: null
 
-userResearch:
+userTesting:
   enabled: false
-  renewal: false
 
 analytics:
   enabled: false
