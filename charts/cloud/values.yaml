@@ -19,10 +19,10 @@ image:
   nginx:
     pullPolicy: IfNotPresent
     repository: nginx
-    tag: nginx-1.26.3-alpine
+    tag: 1.26.3-alpine
   db:
     pullPolicy: IfNotPresent
-    repository: bitnami/postgres
+    repository: bitnami/postgresql
     tag: 14.15.0
   analytics:
     web:
