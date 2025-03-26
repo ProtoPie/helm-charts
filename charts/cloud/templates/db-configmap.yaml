@@ -49,6 +49,6 @@ data:
   host: "{{ .Release.Name }}-postgresql-hl"
   port: !!str {{ .Values.postgresql.service.ports.postgresql | toString }}
   {{- else }}
-  host: {{ .Values.db.host | quote }}
+  host: {{ .Values.db.env.DB_HOST | quote }}
   port: !!str {{ .Values.db.env.DB_PORT | toString }}
   {{- end }}
