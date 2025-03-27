@@ -67,6 +67,9 @@ spec:
           mountPath: /bitnami/postgresql/data
         - name: db-initialize
           mountPath: /docker-entrypoint-initdb.d
+        {{- if .Values.db.resources}}
+        resources: {{- toYaml .Values.db.resources | nindent 10 }}
+        {{- end }}
       volumes:
         - name: db-initialize
           configMap:

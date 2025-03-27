@@ -114,9 +114,9 @@ db:
   volume: 20Gi
   # If left empty, the default storage class will be used
   storageClassName: ""
+  service:
+    port: 5432
   env:
-    DB_HOST: db
-    DB_PORT: 5432
     POSTGRES_USER: postgres
     POSTGRES_PASSWORD: ""
     DB_DATABASE: proteam
@@ -125,6 +125,17 @@ db:
     DB_WRITE_USER: protopie_w
     DB_READ_PASSWORD: ""
     DB_WRITE_PASSWORD: ""
+  ## @param db.resources Set container requests and limits for different resources like CPU or memory (essential for production workloads)
+  ## Example:
+  ## resources:
+  ##   requests:
+  ##     cpu: 2
+  ##     memory: 512Mi
+  ##   limits:
+  ##     cpu: 3
+  ##     memory: 1024Mi
+  ##
+  resources: {}
 
 postgresql:
   enabled: false
