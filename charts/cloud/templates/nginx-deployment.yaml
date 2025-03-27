@@ -39,6 +39,7 @@ data:
 
       include /etc/nginx/virtualhost/virtualhost.conf;
     }
+
   virtualhost.conf: |
     upstream web_server {
       server ent-cloud-web-svc.{{ .Release.Namespace }}.svc.cluster.local;
@@ -207,6 +208,7 @@ data:
             rewrite ^/?(.*)$ https://{{ .Values.cloud.host }}/p/$1 permanent;
         }
     }
+
     {{- end }}
 ---
 apiVersion: v1
