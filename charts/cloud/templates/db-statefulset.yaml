@@ -62,6 +62,9 @@ spec:
             secretKeyRef:
               name: db-secret
               key: write-password
+        {{- if .Values.db.extra.envs }}
+        {{- toYaml .Values.db.extra.envs | nindent 8 }}
+        {{- end }}
         volumeMounts:
         - name: pg-data
           mountPath: /bitnami/postgresql/data
