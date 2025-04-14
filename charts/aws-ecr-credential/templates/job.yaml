@@ -4,6 +4,9 @@ metadata:
   name: {{ include "aws-ecr-credential.job" . }}
   labels:
     {{- include "aws-ecr-credential.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
 spec:
   backoffLimit: 4
   template:
