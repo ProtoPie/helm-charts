@@ -125,6 +125,8 @@ db:
     DB_WRITE_USER: protopie_w
     DB_READ_PASSWORD: ""
     DB_WRITE_PASSWORD: ""
+  extra:
+    envs: []
   ## @param db.resources Set container requests and limits for different resources like CPU or memory (essential for production workloads)
   ## Example:
   ## resources:
