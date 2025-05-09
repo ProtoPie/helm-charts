@@ -2,21 +2,53 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: postgres-init-script-configmap
+  labels:
+    {{- include "protopie.labels" . | nindent 4 }}
 data:
   01-init.sh: |-
     #!/bin/bash
     set -e
-    psql -v ON_ERROR_STOP=1 --username "${POSTGRES_USER}" <<-EOSQL
-      CREATE DATABASE ${DB_DATABASE} ENCODING 'UTF-8' LC_COLLATE 'C' LC_CTYPE 'C' TEMPLATE 'template0';
-      CREATE DATABASE ${DB_DATABASE_ANALYTICS} ENCODING 'UTF-8' LC_COLLATE 'C' LC_CTYPE 'C' TEMPLATE 'template0';
-      CREATE USER ${DB_READ_USER} PASSWORD '${DB_READ_PASSWORD}';
-      CREATE USER ${DB_WRITE_USER} PASSWORD '${DB_WRITE_PASSWORD}' IN ROLE ${DB_READ_USER};
+    export PGPASSWORD=$POSTGRESQL_PASSWORD
+    psql -v ON_ERROR_STOP=1 --username {{ .Values.db.env.POSTGRES_USER }} <<-EOSQL
+      SELECT 'CREATE DATABASE {{ .Values.db.env.DB_DATABASE }} ENCODING ''UTF-8'' LC_COLLATE ''C'' LC_CTYPE ''C'' TEMPLATE template0'
+        WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '{{ .Values.db.env.DB_DATABASE }}')
+        \gexec
+      SELECT 'CREATE DATABASE {{ .Values.db.env.DB_DATABASE_ANALYTICS }} ENCODING ''UTF-8'' LC_COLLATE ''C'' LC_CTYPE ''C'' TEMPLATE template0'
+        WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '{{ .Values.db.env.DB_DATABASE_ANALYTICS }}')
+        \gexec
+      DO \$\$
+      BEGIN
+        IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = '{{ .Values.db.env.DB_READ_USER }}') THEN
+          CREATE USER {{ .Values.db.env.DB_READ_USER }} PASSWORD '{{ .Values.db.env.DB_READ_PASSWORD }}';
+        END IF;
+        IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = '{{ .Values.db.env.DB_WRITE_USER }}') THEN
+          CREATE USER {{ .Values.db.env.DB_WRITE_USER }} PASSWORD '{{ .Values.db.env.DB_WRITE_PASSWORD }}' IN ROLE {{ .Values.db.env.DB_READ_USER }};
+        END IF;
+      END \$\$;
     EOSQL
   02-role.sh: |-
     #!/bin/bash
     set -e
-    psql -v ON_ERROR_STOP=1 --username "${POSTGRES_USER}" --dbname "${DB_DATABASE}" <<-EOSQL
+    psql -v ON_ERROR_STOP=1 --username "{{ .Values.db.env.POSTGRES_USER }}" --dbname "{{ .Values.db.env.DB_DATABASE }}" <<-EOSQL
       CREATE EXTENSION IF NOT EXISTS pgcrypto;
       CREATE EXTENSION IF NOT EXISTS pg_trgm;
-      ALTER DEFAULT PRIVILEGES FOR ROLE ${DB_WRITE_USER} IN SCHEMA public GRANT SELECT ON TABLES TO ${DB_READ_USER};
+      ALTER DEFAULT PRIVILEGES FOR ROLE {{ .Values.db.env.DB_WRITE_USER }} IN SCHEMA public GRANT SELECT ON TABLES TO {{ .Values.db.env.DB_READ_USER }};
     EOSQL
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: db-config
+  labels:
+    {{- include "protopie.labels" . | nindent 4 }}
+data:
+  database: {{ .Values.db.env.DB_DATABASE | quote }}
+  analytics-database: {{ .Values.db.env.DB_DATABASE_ANALYTICS | quote }}
+  {{- if .Values.postgresql.enabled }}
+  host: "{{ .Release.Name }}-postgresql-hl"
+  port: !!str {{ .Values.postgresql.service.ports.postgresql | toString }}
+  {{- else }}
+  host: db
+  port: !!str {{ .Values.db.service.port | toString }}
+  {{- end }}

@@ -42,5 +42,5 @@ nginx:
 analytics:
   enabled: false # This feature is a closed alpha, there are no public images
 
-userResearch:
+userTesting:
   enabled: false # This feature is a closed alpha, there are no public images
