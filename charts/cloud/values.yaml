@@ -7,15 +7,15 @@ image:
     api:
       pullPolicy: IfNotPresent
       repository: protopie/enterprise-onpremises
-      tag: api-15.3.1
+      tag: api-15.4.1
     web:
       pullPolicy: IfNotPresent
       repository: protopie/enterprise-onpremises
-      tag: web-15.3.1
+      tag: web-15.4.1
     userTesting:
       pullPolicy: IfNotPresent
-      repository: 310455165573.dkr.ecr.ap-northeast-2.amazonaws.com/enterprise-cloud
-      tag: user-testing-15.3.1
+      repository: enterprise-cloud
+      tag: user-testing-15.4.0
   nginx:
     pullPolicy: IfNotPresent
     repository: nginx
