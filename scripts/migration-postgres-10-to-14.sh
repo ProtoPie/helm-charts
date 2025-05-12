@@ -265,5 +265,4 @@ migrate_postgres_10_to_14 "$KUBE_CONTEXT" "$NAMESPACE"
 exit $?
 
 # --- Example Usage ---
-# Make sure you are logged into the correct AWS account and have kubectl access.
-# ./scripts/postgres-10-to-14-bitnami.sh <kube_context_arn> <namespace_name>
+# ./scripts/postgres-10-to-14-bitnami.sh <kube_context> <namespace_name>
