@@ -62,10 +62,18 @@ spec:
             httpGet:
               path: /
               port: http
+            successThreshold: {{ default 1 .Values.livenessProbe.successThreshold }}
+            periodSeconds: {{ default 10 .Values.livenessProbe.periodSeconds }}
+            failureThreshold: {{ default 3 .Values.livenessProbe.failureThreshold }}
+            timeoutSeconds: {{ default 1 .Values.livenessProbe.timeoutSeconds }}
           readinessProbe:
             httpGet:
               path: /
               port: http
+            successThreshold: {{ default 1 .Values.readinessProbe.successThreshold }}
+            periodSeconds: {{ default 10 .Values.readinessProbe.periodSeconds }}
+            failureThreshold: {{ default 3 .Values.readinessProbe.failureThreshold }}
+            timeoutSeconds: {{ default 1 .Values.readinessProbe.timeoutSeconds }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           volumeMounts:
