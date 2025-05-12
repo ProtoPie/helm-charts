@@ -89,11 +89,11 @@ spec:
             httpGet:
               path: /
               port: http
-            initialDelaySeconds: {{ default 0 .Values.startupProbe.initialDelaySeconds }}
-            successThreshold: {{ default 1 .Values.startupProbe.successThreshold }}
-            periodSeconds: {{ default 10 .Values.startupProbe.periodSeconds }}
-            failureThreshold: {{ default 3 .Values.startupProbe.failureThreshold }}
-            timeoutSeconds: {{ default 1 .Values.startupProbe.timeoutSeconds }}
+            initialDelaySeconds: {{ default 0 .Values.cloud.startupProbe.initialDelaySeconds }}
+            successThreshold: {{ default 1 .Values.cloud.startupProbe.successThreshold }}
+            periodSeconds: {{ default 10 .Values.cloud.startupProbe.periodSeconds }}
+            failureThreshold: {{ default 3 .Values.cloud.startupProbe.failureThreshold }}
+            timeoutSeconds: {{ default 1 .Values.cloud.startupProbe.timeoutSeconds }}
           livenessProbe:
             httpGet:
               path: /
