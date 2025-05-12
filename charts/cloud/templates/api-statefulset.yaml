@@ -62,7 +62,7 @@ spec:
             httpGet:
               path: /
               port: http
-            initialDelaySeconds: {{ default 30 .Values.startupProbe.initialDelaySeconds }}
+            initialDelaySeconds: {{ default 0 .Values.startupProbe.initialDelaySeconds }}
             successThreshold: {{ default 1 .Values.startupProbe.successThreshold }}
             periodSeconds: {{ default 10 .Values.startupProbe.periodSeconds }}
             failureThreshold: {{ default 3 .Values.startupProbe.failureThreshold }}
