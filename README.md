@@ -64,3 +64,9 @@ analytics:
 userResearch:
   enabled: false # This feature is a closed alpha, there are no public images
 ```
+
+## Changelog
+
+### 3.0.0
+
+In this release we upgrade the database image from `postgres:10` to `bitnami/postgresql:14`. This is breaking change, and you need to migrate your database before upgrading. Please refer to the [migration guide](/docs/3.x%20database%20migration%20guide.md) before upgrade your chart.
