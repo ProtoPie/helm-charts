@@ -267,9 +267,3 @@ exit $?
 # --- Example Usage ---
 # Make sure you are logged into the correct AWS account and have kubectl access.
 # ./scripts/postgres-10-to-14-bitnami.sh <kube_context_arn> <namespace_name>
-#
-# Example for a specific namespace 'my-namespace' in Seoul (apne2):
-# ./scripts/postgres-10-to-14-bitnami.sh "arn:aws:eks:ap-northeast-2:794161565898:cluster/prod-seoul-cluster" "my-namespace"
-#
-# Example for a specific namespace 'another-ns' in Frankfurt (euc1):
-# ./scripts/postgres-10-to-14-bitnami.sh "arn:aws:eks:eu-central-1:794161565898:cluster/prod-frankfurt-cluster" "another-ns"
