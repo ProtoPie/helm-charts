@@ -2,6 +2,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: enterprise-cloud-web
+  labels:
+    {{- include "protopie.labels" . | nindent 4 }}
 spec:
   selector:
     matchLabels:

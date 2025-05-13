@@ -2,10 +2,12 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: nginx-conf
+  labels:
+    {{- include "protopie.labels" . | nindent 4 }}
 data:
   nginx.conf: |
     #user root;
-    error_log  /var/log/nginx/error.log;
+    error_log  /dev/stderr;
     worker_processes  1;
     events {
       worker_connections  1024;
@@ -33,21 +35,17 @@ data:
               'useragent:$http_user_agent\t'
               'forwardedfor:$http_x_forwarded_for\t'
               'request_time:$request_time';
-      access_log  /var/log/nginx/access.log main;
+      access_log  /dev/stdout;
 
       include /etc/nginx/virtualhost/virtualhost.conf;
     }
+
   virtualhost.conf: |
     upstream web_server {
       server ent-cloud-web-svc.{{ .Release.Namespace }}.svc.cluster.local;
     }
 
-    {{- if and .Values.userResearch.enabled ( not .Values.userResearch.renewal ) }}
-    upstream user-research_server {
-      server ent-cloud-ur-svc.{{ .Release.Namespace }}.svc.cluster.local;
-    }
-    {{- end }}
-    {{- if and .Values.userResearch.enabled .Values.userResearch.renewal }}
+    {{- if .Values.userTesting.enabled }}
     upstream user-testing-api_server {
       server ent-cloud-ut-svc.{{ .Release.Namespace }}.svc.cluster.local;
     }
@@ -148,16 +146,7 @@ data:
             proxy_pass http://api_server/;
         }
 
-        {{- if and .Values.userResearch.enabled ( not .Values.userResearch.renewal ) }}
-        location /user-research {
-            proxy_pass http://user-research_server;
-            proxy_http_version 1.1;
-            proxy_set_header Upgrade $http_upgrade;
-            proxy_set_header Connection $connection_upgrade;
-        }
-        {{- end }}
-
-        {{- if and .Values.userResearch.enabled .Values.userResearch.renewal }}
+        {{- if .Values.userTesting.enabled }}
         location ^~ /user-research/socket {
             rewrite ^/user-research/(.*)$ /$1 break;
             proxy_pass http://user-testing-socket_server;
@@ -219,6 +208,7 @@ data:
             rewrite ^/?(.*)$ https://{{ .Values.cloud.host }}/p/$1 permanent;
         }
     }
+
     {{- end }}
 ---
 apiVersion: v1
@@ -269,7 +259,8 @@ spec:
     spec:
       containers:
       - name: nginx
-        image: nginx:1.14.0-alpine
+        image: "{{ .Values.image.nginx.repository }}:{{ .Values.image.nginx.tag }}"
+        imagePullPolicy: {{ .Values.image.nginx.pullPolicy }}
         ports:
           - name: http
             containerPort: 80

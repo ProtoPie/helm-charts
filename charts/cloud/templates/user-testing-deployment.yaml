@@ -1,8 +1,10 @@
-{{- if and .Values.userResearch.enabled .Values.userResearch.renewal }}
+{{- if .Values.userTesting.enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: ent-cloud-ut
+  labels:
+    {{- include "protopie.labels" . | nindent 4 }}
 spec:
   selector:
     matchLabels:
@@ -25,8 +27,8 @@ spec:
       {{- end }}
       containers:
         - name: ent-cloud-ut
-          image: "{{ .Values.image.cloud.userResearch.repository }}:{{ .Values.image.cloud.userResearch.tag }}"
-          imagePullPolicy: {{ .Values.image.cloud.userResearch.pullPolicy }}
+          image: "{{ .Values.image.cloud.userTesting.repository }}:{{ .Values.image.cloud.userTesting.tag }}"
+          imagePullPolicy: {{ .Values.image.cloud.userTesting.pullPolicy }}
           env:
             - name: API_URL
               value: "http://ent-cloud-api-svc.{{ .Release.Namespace }}.svc.cluster.local"
