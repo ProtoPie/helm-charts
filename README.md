@@ -70,3 +70,5 @@ userResearch:
 ### 3.0.0
 
 In this release we upgrade the database image from `postgres:10` to `bitnami/postgresql:14`. This is breaking change, and you need to migrate your database before upgrading. Please refer to the [migration guide](/docs/3.x%20database%20migration%20guide.md) before upgrade your chart.
+
+We also optionally include the `bitnami/postgresql` chart, but it is preparation for the future updates. We will leverage it sometime in the future, but for now, it is not used. You can safely ignore it.
