@@ -83,6 +83,23 @@ cloud:
     host: ""
   api:
     replicas: 1
+    startupProbe:
+      httpGet:
+        path: /
+        port: http
+      initialDelaySeconds: 0
+      successThreshold: 1
+      periodSeconds: 10
+      failureThreshold: 3
+      timeoutSeconds: 1
+    livenessProbe:
+      httpGet:
+        path: /
+        port: http
+    readinessProbe:
+      httpGet:
+        path: /
+        port: http
   web:
     replicas: 1
   volumes:
