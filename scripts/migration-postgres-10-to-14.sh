@@ -184,10 +184,9 @@ migrate_postgres_10_to_14() {
     echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
     read -rp "Once the NEW '$pod_name' pod is RUNNING, type 'continue' and press [Enter]: " user_input
 
-    if [[ "$user_input" != "continue" ]]; then
-      echo "Aborting migration for $namespace. Local dump file '$dump_file' is kept."
-      return 1
-    fi
+    while [[ "$user_input" != "continue" ]]; do
+      read -rp "Once the NEW '$pod_name' pod is RUNNING, type 'continue' and press [Enter]: " user_input
+    done
   fi
 
   # --- Step 3: Restore to new Bitnami Postgres 14 pod ---
