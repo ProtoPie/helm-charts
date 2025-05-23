@@ -228,9 +228,9 @@ migrate_postgres_10_to_14() {
     echo "1. Copy the dump file to the new pod:"
     echo "   kubectl cp \"$dump_file\" \"${namespace}/${pod_name}:/tmp/restore_dump.sql\""
     echo "2. Execute psql in the pod to restore from the file:"
-    echo "   kubectl exec -it \"${namespace}/${pod_name}\" -- sh -c 'env PGPASSWORD=\$POSTGRESQL_PASSWORD psql -U postgres -d proteam -f /tmp/restore_dump.sql'"
+    echo "   kubectl exec -it -n ${namespace} \"pod/${pod_name}\" -- sh -c 'env PGPASSWORD=\$POSTGRESQL_PASSWORD psql -U postgres -d proteam -f /tmp/restore_dump.sql'"
     echo "3. (Optional) After successful restore, remove the dump file from the pod:"
-    echo "   kubectl exec \"${namespace}/${pod_name}\" -- rm /tmp/restore_dump.sql"
+    echo "   kubectl exec -n ${namespace} \"pod/${pod_name}\" -- rm /tmp/restore_dump.sql"
     echo "Aborting script. Please attempt manual restore."
     return 1
   fi
