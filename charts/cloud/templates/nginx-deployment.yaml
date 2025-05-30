@@ -123,6 +123,9 @@ data:
         # redirect to api
         location /api {
             proxy_set_header X-API-Prefix /api;
+            {{- if .Values.cloud.api.featureFlag }}
+            proxy_set_header X-feature-flag on;
+            {{- end }}
             rewrite ^/api/?(.*) /$1 break;
             proxy_pass http://api_server/;
         }
