@@ -184,10 +184,9 @@ migrate_postgres_10_to_14() {
     echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
     read -rp "Once the NEW '$pod_name' pod is RUNNING, type 'continue' and press [Enter]: " user_input
 
-    if [[ "$user_input" != "continue" ]]; then
-      echo "Aborting migration for $namespace. Local dump file '$dump_file' is kept."
-      return 1
-    fi
+    while [[ "$user_input" != "continue" ]]; do
+      read -rp "Once the NEW '$pod_name' pod is RUNNING, type 'continue' and press [Enter]: " user_input
+    done
   fi
 
   # --- Step 3: Restore to new Bitnami Postgres 14 pod ---
@@ -228,9 +227,9 @@ migrate_postgres_10_to_14() {
     echo "1. Copy the dump file to the new pod:"
     echo "   kubectl cp \"$dump_file\" \"${namespace}/${pod_name}:/tmp/restore_dump.sql\""
     echo "2. Execute psql in the pod to restore from the file:"
-    echo "   kubectl exec -it \"${namespace}/${pod_name}\" -- sh -c 'env PGPASSWORD=\$POSTGRESQL_PASSWORD psql -U postgres -d proteam -f /tmp/restore_dump.sql'"
+    echo "   kubectl exec -it -n ${namespace} \"pod/${pod_name}\" -- sh -c 'env PGPASSWORD=\$POSTGRESQL_PASSWORD psql -U postgres -d proteam -f /tmp/restore_dump.sql'"
     echo "3. (Optional) After successful restore, remove the dump file from the pod:"
-    echo "   kubectl exec \"${namespace}/${pod_name}\" -- rm /tmp/restore_dump.sql"
+    echo "   kubectl exec -n ${namespace} \"pod/${pod_name}\" -- rm /tmp/restore_dump.sql"
     echo "Aborting script. Please attempt manual restore."
     return 1
   fi
