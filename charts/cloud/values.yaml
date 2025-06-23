@@ -7,11 +7,11 @@ image:
     api:
       pullPolicy: IfNotPresent
       repository: protopie/enterprise-onpremises
-      tag: api-15.5.2
+      tag: api-15.6.1
     web:
       pullPolicy: IfNotPresent
       repository: protopie/enterprise-onpremises
-      tag: web-15.5.2
+      tag: web-15.6.1
     userTesting:
       pullPolicy: IfNotPresent
       repository: enterprise-cloud
