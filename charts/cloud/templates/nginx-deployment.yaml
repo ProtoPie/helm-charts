@@ -218,15 +218,22 @@ metadata:
 data:
   appleAppSiteAssociation: |
     {
-      "applinks": {
-          "apps": [],
-          "details": [
-              {
-                  "appID": "24V7JB28L6.com.studioxid.ProtoPie",
-                  "paths": [ "/p/*" ]
-              }
-          ]
-      }
+        "applinks": {
+            "apps": [],
+            "details": [
+                {
+                    "appID": "24V7JB28L6.com.studioxid.ProtoPie",
+                    "paths": [
+                        "/p/*"
+                    ]
+                }
+            ]
+        },
+        "appclips": {
+            "apps": [
+                "24V7JB28L6.com.studioxid.ProtoPie.PlayerClip"
+            ]
+        }
     }
   assetlinks.json: |
     [
