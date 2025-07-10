@@ -176,12 +176,12 @@ data:
 
         # robots.txt
         location = /robots.txt {
-            root /usr/share/nginx/html/nginx-html/;
+            root /usr/share/nginx/html/;
         }
 
         # static pages
         location ~ ^/(.well-known|outdated)/ {
-            root /usr/share/nginx/html/nginx-html/;
+            root /usr/share/nginx/html/;
         }
 
         # redirect as outdated browser has been connected
