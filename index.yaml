@@ -63,6 +63,21 @@ entries:
     version: 1.4.2
   cloud:
   - apiVersion: v2
+    appVersion: 15.6.5
+    created: "2025-07-21T08:07:25.890455599Z"
+    dependencies:
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: oci://registry-1.docker.io/bitnamicharts
+      version: ~16.4.14
+    description: A Helm chart for Protopie Cloud
+    digest: 6b76862e7b509eaf7eabec520d36aae19d9833bea80cf95c44f6bd202baf98ef
+    name: cloud
+    type: application
+    urls:
+    - https://github.com/ProtoPie/helm-charts/releases/download/cloud-3.1.1/cloud-3.1.1.tgz
+    version: 3.1.1
+  - apiVersion: v2
     appVersion: 15.6.1
     created: "2025-07-10T02:29:37.423181678Z"
     dependencies:
@@ -442,4 +457,4 @@ entries:
     urls:
     - https://github.com/ProtoPie/helm-charts/releases/download/cloud-1.0.1/cloud-1.0.1.tgz
     version: 1.0.1
-generated: "2025-07-10T02:29:37.42348003Z"
+generated: "2025-07-21T08:07:25.890700509Z"
