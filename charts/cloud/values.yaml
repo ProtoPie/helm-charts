@@ -7,15 +7,15 @@ image:
     api:
       pullPolicy: IfNotPresent
       repository: protopie/enterprise-onpremises
-      tag: api-15.6.3
+      tag: api-15.7.0
     web:
       pullPolicy: IfNotPresent
       repository: protopie/enterprise-onpremises
-      tag: web-15.6.5
+      tag: web-15.7.0
     userTesting:
       pullPolicy: IfNotPresent
       repository: enterprise-cloud
-      tag: user-testing-15.4.0
+      tag: user-testing-15.7.0
   nginx:
     pullPolicy: IfNotPresent
     repository: nginx
