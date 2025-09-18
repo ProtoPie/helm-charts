@@ -287,8 +287,10 @@ spec:
         - name: nginx-conf
           mountPath: /etc/nginx # mount nginx-conf volume to /etc/nginx
           readOnly: true
+        {{- if .Values.cloud.wellKnown.enabled }}
         - name: html
           mountPath: /usr/share/nginx/html
+        {{- end }}
         - name: log
           mountPath: /var/log/nginx
       {{- with .Values.nodeSelector }}
