@@ -301,6 +301,7 @@ spec:
               path: nginx.conf
             - key: virtualhost.conf
               path: virtualhost/virtualhost.conf # dig directory
+      {{- if .Values.cloud.wellKnown.enabled }}
       - name: html
         configMap:
           name: html
@@ -309,5 +310,6 @@ spec:
               path: .well-known/apple-app-site-association
             - key: assetlinks.json
               path: .well-known/assetlinks.json
+      {{- end }}
       - name: log
         emptyDir: {}

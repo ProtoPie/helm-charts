@@ -85,6 +85,8 @@ cloud:
     replicas: 1
   web:
     replicas: 1
+  wellKnown:
+    enabled: false
   volumes:
     # If left empty, the default storage class will be used
     storageClassName: ""
