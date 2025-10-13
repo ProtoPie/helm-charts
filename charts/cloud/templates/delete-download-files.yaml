@@ -67,4 +67,17 @@ spec:
               command:
                 - /bin/sh
                 - -c
-                - kubectl exec pod/enterprise-cloud-api-0 -- sh -c 'rm -rf /app/download/*'
+                - |
+                  POD_NAME="enterprise-cloud-api-0"
+
+                  # Pod 존재 여부 먼저 확인
+                  if kubectl get pod "$POD_NAME" >/dev/null 2>&1; then
+                    echo "[$(date)] Pod $POD_NAME found. Cleaning /app/download..."
+                    kubectl exec pod/$POD_NAME -- sh -c 'rm -rf /app/download/*'
+                    echo "[$(date)] Cleanup completed."
+                  else
+                    echo "[$(date)] Pod $POD_NAME not found. Skipping cleanup."
+                  fi
+
+                  # 항상 정상 종료
+                  exit 0
