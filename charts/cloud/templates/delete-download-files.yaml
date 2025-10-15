@@ -2,37 +2,34 @@ kind: Role
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: kubectl-exec-runner
-  labels:
-    {{- include "protopie.labels" . | nindent 4 }}
+  labels: { { - include "protopie.labels" . | nindent 4 } }
 rules:
   - apiGroups:
-    - ""
+      - ""
     resources:
-    - "pods"
-    - "pods/log"
+      - "pods"
+      - "pods/log"
     verbs:
-    - "get"
-    - "list"
+      - "get"
+      - "list"
   - apiGroups:
-    - ""
+      - ""
     resources:
-    - "pods/exec"
+      - "pods/exec"
     verbs:
-    - "create"
+      - "create"
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: delete-download-sa
-  labels:
-    {{- include "protopie.labels" . | nindent 4 }}
+  labels: { { - include "protopie.labels" . | nindent 4 } }
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: kubectl-exec-runner--delete-download-sa
-  labels:
-    {{- include "protopie.labels" . | nindent 4 }}
+  labels: { { - include "protopie.labels" . | nindent 4 } }
 subjects:
   - kind: ServiceAccount
     name: delete-download-sa
@@ -46,10 +43,9 @@ apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: delete-download-files
-  labels:
-    {{- include "protopie.labels" . | nindent 4 }}
+  labels: { { - include "protopie.labels" . | nindent 4 } }
 spec:
-  schedule: {{ .Values.cloud.cleanUpSchedule | quote }}
+  schedule: { { .Values.cloud.cleanUpSchedule | quote } }
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 1
   failedJobsHistoryLimit: 1
@@ -71,9 +67,9 @@ spec:
                   POD_NAME="enterprise-cloud-api-0"
 
                   # Pod 존재 여부 먼저 확인
-                  if kubectl get pod "$POD_NAME" >/dev/null 2>&1; then
+                  if kubectl get pod "$POD_NAME" --request-timeout=10s >/dev/null 2>&1; then
                     echo "[$(date)] Pod $POD_NAME found. Cleaning /app/download..."
-                    kubectl exec pod/$POD_NAME -- sh -c 'rm -rf /app/download/*'
+                    kubectl exec pod/$POD_NAME  --request-timeout=10s -- sh -c 'rm -rf /app/download/* '
                     echo "[$(date)] Cleanup completed."
                   else
                     echo "[$(date)] Pod $POD_NAME not found. Skipping cleanup."
