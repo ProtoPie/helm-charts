@@ -69,3 +69,47 @@ Create imagePullSecrets
 {{- printf "{\"auths\":{\"%s\":{\"username\":\"%s\",\"password\":\"%s\",\"email\":\"%s\",\"auth\":\"%s\"}}}" .registry .username .password .email (printf "%s:%s" .username .password | b64enc) | b64enc }}
 {{- end }}
 {{- end }}
+
+{{/*
+Generate DB_WRITE_PASSWORD - use provided value or generate random
+*/}}
+{{- define "protopie.db.writePassword" -}}
+{{- if .Values.db.env.DB_WRITE_PASSWORD }}
+{{- .Values.db.env.DB_WRITE_PASSWORD }}
+{{- else }}
+{{- randAlphaNum 32 }}
+{{- end }}
+{{- end }}
+
+{{/*
+Generate DB_READ_PASSWORD - use provided value or generate random
+*/}}
+{{- define "protopie.db.readPassword" -}}
+{{- if .Values.db.env.DB_READ_PASSWORD }}
+{{- .Values.db.env.DB_READ_PASSWORD }}
+{{- else }}
+{{- randAlphaNum 32 }}
+{{- end }}
+{{- end }}
+
+{{/*
+Generate Analytics AE_API_USER_PASS - use provided value or generate random
+*/}}
+{{- define "protopie.analytics.aeApiUserPass" -}}
+{{- if .Values.analytics.secrets.aeApiUserPass }}
+{{- .Values.analytics.secrets.aeApiUserPass }}
+{{- else }}
+{{- randAlphaNum 32 }}
+{{- end }}
+{{- end }}
+
+{{/*
+Generate Analytics DJANGO_SECRET_KEY - use provided value or generate random
+*/}}
+{{- define "protopie.analytics.djangoSecretKey" -}}
+{{- if .Values.analytics.secrets.djangoSecretKey }}
+{{- .Values.analytics.secrets.djangoSecretKey }}
+{{- else }}
+{{- randAlphaNum 50 }}
+{{- end }}
+{{- end }}

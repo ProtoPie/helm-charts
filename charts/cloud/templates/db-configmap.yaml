@@ -19,10 +19,10 @@ data:
       DO \$\$
       BEGIN
         IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = '{{ .Values.db.env.DB_READ_USER }}') THEN
-          CREATE USER {{ .Values.db.env.DB_READ_USER }} PASSWORD '{{ .Values.db.env.DB_READ_PASSWORD }}';
+          CREATE USER {{ .Values.db.env.DB_READ_USER }} PASSWORD '{{ include "protopie.db.readPassword" . }}';
         END IF;
         IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = '{{ .Values.db.env.DB_WRITE_USER }}') THEN
-          CREATE USER {{ .Values.db.env.DB_WRITE_USER }} PASSWORD '{{ .Values.db.env.DB_WRITE_PASSWORD }}' IN ROLE {{ .Values.db.env.DB_READ_USER }};
+          CREATE USER {{ .Values.db.env.DB_WRITE_USER }} PASSWORD '{{ include "protopie.db.writePassword" . }}' IN ROLE {{ .Values.db.env.DB_READ_USER }};
         END IF;
       END \$\$;
     EOSQL
