@@ -96,8 +96,8 @@ Generate DB_READ_PASSWORD - use provided value or generate random
 Generate Analytics AE_API_USER_PASS - use provided value or generate random
 */}}
 {{- define "protopie.analytics.aeApiUserPass" -}}
-{{- if .Values.analytics.secrets.aeApiUserPass }}
-{{- .Values.analytics.secrets.aeApiUserPass }}
+{{- if .Values.analytics.web.env.AE_API_USER_PASS }}
+{{- .Values.analytics.web.env.AE_API_USER_PASS }}
 {{- else }}
 {{- randAlphaNum 32 }}
 {{- end }}
@@ -107,8 +107,8 @@ Generate Analytics AE_API_USER_PASS - use provided value or generate random
 Generate Analytics DJANGO_SECRET_KEY - use provided value or generate random
 */}}
 {{- define "protopie.analytics.djangoSecretKey" -}}
-{{- if .Values.analytics.secrets.djangoSecretKey }}
-{{- .Values.analytics.secrets.djangoSecretKey }}
+{{- if .Values.analytics.api.env.DJANGO_SECRET_KEY }}
+{{- .Values.analytics.api.env.DJANGO_SECRET_KEY }}
 {{- else }}
 {{- randAlphaNum 50 }}
 {{- end }}

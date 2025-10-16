@@ -62,23 +62,21 @@ userTesting:
 
 analytics:
   enabled: false
-  # Sensitive values should be provided via --set or external secret management
-  secrets:
-    # AE_API_USER_PASS for analytics web authentication
-    aeApiUserPass: ""
-    # DJANGO_SECRET_KEY for analytics api
-    djangoSecretKey: ""
   web:
     env:
       DEBUG: DO_NOT_DEFINE_THIS_VARIABLE_ON_PRODUCT
       COOKIE_NAME: AE_TOKEN
       URL_BASE_PATHNAME: "/analytics/"
       AE_API_USER_ID: "admin"
+      # If left empty, a random password will be generated automatically
+      AE_API_USER_PASS: ""
   api:
     env:
       ROOT_PATH: "/api/analytics/"
       DEBUG: DO_NOT_DEFINE_THIS_VARIABLE_ON_PRODUCT
       ALLOWED_HOSTS: "*"
+      # If left empty, a random password will be generated automatically
+      DJANGO_SECRET_KEY: ""
 
 cloud:
   host: ""
