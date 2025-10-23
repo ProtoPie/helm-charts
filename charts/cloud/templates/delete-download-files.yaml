@@ -51,6 +51,7 @@ metadata:
 spec:
   schedule: {{ .Values.cloud.cleanUpSchedule | quote }}
   concurrencyPolicy: Forbid
+  backoffLimit: 0 # 실패 시 재시도 안함
   successfulJobsHistoryLimit: 1
   failedJobsHistoryLimit: 1
   jobTemplate:
@@ -60,6 +61,7 @@ spec:
           serviceAccountName: delete-download-sa
           restartPolicy: Never
           activeDeadlineSeconds: 300
+          terminationGracePeriodSeconds: 30 # SIGTERM 후 30초 대기 (cleanup 완료 유예)
           containers:
             - name: delete-download-files
               image: bitnami/kubectl:1.28.2
