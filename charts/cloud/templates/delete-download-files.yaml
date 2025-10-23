@@ -64,7 +64,7 @@ spec:
           terminationGracePeriodSeconds: 30 # SIGTERM 후 30초 대기 (cleanup 완료 유예)
           containers:
             - name: delete-download-files
-              image: bitnami/kubectl:1.28.2
+              image: bitnami/kubectl:latest
               imagePullPolicy: IfNotPresent
               command:
                 - /bin/sh
