@@ -73,7 +73,7 @@ spec:
                   POD_NAME="enterprise-cloud-api-0"
 
                   # Pod 존재 여부 먼저 확인
-                  if kubectl get pod "$POD_NAME" -n {{ .Release.Namespace }} --request-timeout=10s >/dev/null 2>&1; then
+                  if kubectl get pod "$POD_NAME" -n {{ .Release.Namespace }} --request-timeout=10s; then
                     echo "[$(date)] Pod $POD_NAME found. Cleaning /app/download..."
                     kubectl exec pod/$POD_NAME -n {{ .Release.Namespace }} --request-timeout=10s -- sh -c 'rm -rf /app/download/*'
                     echo "[$(date)] Cleanup completed."
