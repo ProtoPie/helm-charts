@@ -7,15 +7,15 @@ image:
     api:
       pullPolicy: IfNotPresent
       repository: protopie/enterprise-onpremises
-      tag: api-15.6.1
+      tag: api-15.7.0
     web:
       pullPolicy: IfNotPresent
       repository: protopie/enterprise-onpremises
-      tag: web-15.6.1
+      tag: web-15.7.0
     userTesting:
       pullPolicy: IfNotPresent
-      repository: 310455165573.dkr.ecr.ap-northeast-2.amazonaws.com/enterprise-cloud
-      tag: user-testing-15.4.0
+      repository: enterprise-cloud
+      tag: user-testing-15.7.0
   nginx:
     pullPolicy: IfNotPresent
     repository: nginx
@@ -68,13 +68,15 @@ analytics:
       COOKIE_NAME: AE_TOKEN
       URL_BASE_PATHNAME: "/analytics/"
       AE_API_USER_ID: "admin"
+      # If left empty, a random password will be generated automatically
       AE_API_USER_PASS: ""
   api:
     env:
-      DJANGO_SECRET_KEY: ""
       ROOT_PATH: "/api/analytics/"
       DEBUG: DO_NOT_DEFINE_THIS_VARIABLE_ON_PRODUCT
       ALLOWED_HOSTS: "*"
+      # If left empty, a random password will be generated automatically
+      DJANGO_SECRET_KEY: ""
 
 cloud:
   host: ""
@@ -142,7 +144,9 @@ db:
     DB_DATABASE_ANALYTICS: analytics
     DB_READ_USER: protopie_r
     DB_WRITE_USER: protopie_w
+    # If left empty, a random password will be generated automatically
     DB_READ_PASSWORD: ""
+    # If left empty, a random password will be generated automatically
     DB_WRITE_PASSWORD: ""
   extra:
     envs: []
