@@ -39,7 +39,10 @@ spec:
         - name: AE_API_USER_ID
           value: {{ .Values.analytics.web.env.AE_API_USER_ID }}
         - name: AE_API_USER_PASS
-          value: {{ .Values.analytics.web.env.AE_API_USER_PASS }}
+          valueFrom:
+            secretKeyRef:
+              name: analytics-secret
+              key: ae-api-user-pass
         - name: DEBUG
           value: {{ .Values.analytics.web.env.DEBUG }}
         - name: COOKIE_NAME

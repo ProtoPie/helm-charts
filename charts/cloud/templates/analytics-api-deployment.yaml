@@ -56,7 +56,10 @@ spec:
               name: db-secret
               key: write-password
         - name: DJANGO_SECRET_KEY
-          value: {{ .Values.analytics.api.env.DJANGO_SECRET_KEY }}
+          valueFrom:
+            secretKeyRef:
+              name: analytics-secret
+              key: django-secret-key
         - name: ROOT_PATH
           value: {{ .Values.analytics.api.env.ROOT_PATH }}
         - name: DEBUG

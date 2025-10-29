@@ -68,13 +68,15 @@ analytics:
       COOKIE_NAME: AE_TOKEN
       URL_BASE_PATHNAME: "/analytics/"
       AE_API_USER_ID: "admin"
+      # If left empty, a random password will be generated automatically
       AE_API_USER_PASS: ""
   api:
     env:
-      DJANGO_SECRET_KEY: ""
       ROOT_PATH: "/api/analytics/"
       DEBUG: DO_NOT_DEFINE_THIS_VARIABLE_ON_PRODUCT
       ALLOWED_HOSTS: "*"
+      # If left empty, a random password will be generated automatically
+      DJANGO_SECRET_KEY: ""
 
 cloud:
   host: ""
@@ -125,7 +127,9 @@ db:
     DB_DATABASE_ANALYTICS: analytics
     DB_READ_USER: protopie_r
     DB_WRITE_USER: protopie_w
+    # If left empty, a random password will be generated automatically
     DB_READ_PASSWORD: ""
+    # If left empty, a random password will be generated automatically
     DB_WRITE_PASSWORD: ""
   extra:
     envs: []
