@@ -102,8 +102,8 @@ userTesting:
   db:
     user: "user_testing"
     database: "user_testing"
-    password: "" # REQUIRED: Set in per-environment values (e.g., values-f1.yaml)
-    postgresPassword: "" # REQUIRED: Set in per-environment values
+    password: "local-dev-password-change-in-prod" # REQUIRED: Set in per-environment values (e.g., values-f1.yaml)
+    postgresPassword: "local-dev-postgres-password-change-in-prod" # REQUIRED: Set in per-environment values
     storage: "10Gi"
     storageClassName: ""
 

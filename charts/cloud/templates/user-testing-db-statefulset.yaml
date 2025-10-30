@@ -44,6 +44,11 @@ spec:
                 secretKeyRef:
                   name: user-testing-db-secret
                   key: postgres-password
+            - name: DB_USER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: user-testing-db-secret
+                  key: password
           # Health probes temporarily disabled for troubleshooting
           # EFS storage + PostgreSQL initialization may conflict with early probe checks
           # livenessProbe:
@@ -73,6 +78,12 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /bitnami/postgresql/data
+            - name: init-scripts
+              mountPath: /docker-entrypoint-initdb.d
+      volumes:
+        - name: init-scripts
+          configMap:
+            name: user-testing-db-init-script
   volumeClaimTemplates:
     - metadata:
         name: data

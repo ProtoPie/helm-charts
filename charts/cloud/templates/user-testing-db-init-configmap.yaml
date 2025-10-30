@@ -1,0 +1,36 @@
+{{- if and .Values.userTesting.enabled (not .Values.userTesting.useLegacy) }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: user-testing-db-init-script
+  labels:
+    {{- include "protopie.labels" . | nindent 4 }}
+    app: user-testing-db
+data:
+  01-init.sh: |-
+    #!/bin/bash
+    set -e
+    export PGPASSWORD=$POSTGRESQL_POSTGRES_PASSWORD
+    
+    echo "Creating user and database..."
+    
+    psql -v ON_ERROR_STOP=1 --username postgres <<-EOSQL
+      -- Create user if not exists
+      DO \$\$
+      BEGIN
+        IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = '{{ .Values.userTesting.db.user }}') THEN
+          CREATE USER {{ .Values.userTesting.db.user }} WITH PASSWORD '${DB_USER_PASSWORD}';
+        END IF;
+      END \$\$;
+      
+      -- Create database if not exists
+      SELECT 'CREATE DATABASE {{ .Values.userTesting.db.database }} OWNER {{ .Values.userTesting.db.user }} ENCODING ''UTF-8'''
+        WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '{{ .Values.userTesting.db.database }}')
+        \gexec
+      
+      -- Grant privileges
+      GRANT ALL PRIVILEGES ON DATABASE {{ .Values.userTesting.db.database }} TO {{ .Values.userTesting.db.user }};
+    EOSQL
+    
+    echo "✅ User and database created successfully"
+{{- end }}
