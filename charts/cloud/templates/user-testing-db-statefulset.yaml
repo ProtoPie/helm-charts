@@ -54,6 +54,13 @@ spec:
               value: "false"
             - name: POSTGRESQL_LOG_DISCONNECTIONS
               value: "false"
+            # Force synchronous writes for EFS compatibility
+            - name: POSTGRESQL_SYNCHRONOUS_COMMIT
+              value: "on"
+            - name: POSTGRESQL_FSYNC
+              value: "on"
+            - name: POSTGRESQL_FULL_PAGE_WRITES
+              value: "on"
           # StartupProbe: Give PostgreSQL up to 10 minutes to initialize on EFS
           # This prevents liveness probe from killing the pod during slow initialization
           startupProbe:
