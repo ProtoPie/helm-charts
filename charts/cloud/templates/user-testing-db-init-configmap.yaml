@@ -10,11 +10,28 @@ data:
   01-init.sh: |-
     #!/bin/bash
     set -e
+
+    echo "🔍 Checking environment variables..."
+    echo "POSTGRESQL_POSTGRES_PASSWORD length: ${#POSTGRESQL_POSTGRES_PASSWORD}"
+    echo "DB_USER_PASSWORD length: ${#DB_USER_PASSWORD}"
+    echo "Target user: {{ .Values.userTesting.db.user }}"
+    echo "Target database: {{ .Values.userTesting.db.database }}"
+
+    if [ -z "$POSTGRESQL_POSTGRES_PASSWORD" ]; then
+      echo "❌ ERROR: POSTGRESQL_POSTGRES_PASSWORD is empty!"
+      exit 1
+    fi
+
+    if [ -z "$DB_USER_PASSWORD" ]; then
+      echo "❌ ERROR: DB_USER_PASSWORD is empty!"
+      exit 1
+    fi
+
     export PGPASSWORD=$POSTGRESQL_POSTGRES_PASSWORD
-    
+
     echo "Creating user and database..."
-    
-    psql -v ON_ERROR_STOP=1 --username postgres <<-EOSQL
+
+    psql -v ON_ERROR_STOP=1 --username postgres -h localhost <<-EOSQL
       -- Create user if not exists
       DO \$\$
       BEGIN
