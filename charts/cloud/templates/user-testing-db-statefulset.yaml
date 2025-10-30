@@ -79,6 +79,7 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /bitnami/postgresql/data
+              subPath: {{ .Values.userTesting.db.storageVersion | quote }}
   volumeClaimTemplates:
     - metadata:
         name: data

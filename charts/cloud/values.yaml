@@ -106,6 +106,9 @@ userTesting:
     postgresPassword: "local-dev-postgres-password-change-in-prod" # REQUIRED: Set in per-environment values
     storage: "10Gi"
     storageClassName: ""
+    # Change this value to force fresh EFS storage (e.g., "v1" → "v2")
+    # Useful for recovering from corruption without deleting EFS data
+    storageVersion: "v1"
 
     resources:
       requests:
