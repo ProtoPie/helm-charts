@@ -86,7 +86,8 @@ userTesting:
   replicas: 1
   logLevel: "info"
   cloudApiBaseUrl: "http://ent-cloud-api-svc:3000"
-  cloudApiUseMock: "false"
+  useMockCloudApi: "false"
+  jwtExpiresIn: "1d"
 
   # User Testing Server resources
   resources:
@@ -126,6 +127,9 @@ userTesting:
 
   # JWT Secret for authentication
   jwtSecret: "" # REQUIRED: Set in per-environment values (openssl rand -base64 32)
+
+  # Cloud-API Service Key for server-to-server authentication
+  cloudApiServiceKey: "" # REQUIRED: Set in per-environment values (obtain from cloud-api team)
 
 analytics:
   enabled: false
