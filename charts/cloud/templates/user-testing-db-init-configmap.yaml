@@ -29,9 +29,16 @@ data:
 
     export PGPASSWORD=$POSTGRESQL_POSTGRES_PASSWORD
 
+    echo "⏳ Waiting for PostgreSQL to be ready..."
+    until pg_isready -U postgres; do
+      echo "PostgreSQL is not ready yet, waiting..."
+      sleep 2
+    done
+    echo "✅ PostgreSQL is ready!"
+
     echo "Creating user and database..."
 
-    psql -v ON_ERROR_STOP=1 --username postgres -h localhost <<-EOSQL
+    psql -v ON_ERROR_STOP=1 --username postgres --dbname postgres <<-EOSQL
       -- Create user if not exists
       DO \$\$
       BEGIN
