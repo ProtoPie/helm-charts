@@ -30,7 +30,7 @@ spec:
               containerPort: 5432
               protocol: TCP
           env:
-            - name: POSTGRESQL_USER
+            - name: POSTGRESQL_USERNAME
               value: {{ .Values.userTesting.db.user | quote }}
             - name: POSTGRESQL_PASSWORD
               valueFrom:
