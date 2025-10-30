@@ -22,11 +22,11 @@ image:
       tag: ut-dev
     userTestingDb:
       pullPolicy: IfNotPresent
-      repository: 310455165573.dkr.ecr.ap-northeast-2.amazonaws.com/postgresql
+      repository: 310455165573.dkr.ecr.us-west-2.amazonaws.com/postgresql
       tag: 16.6.0
     userTestingRedis:
       pullPolicy: IfNotPresent
-      repository: 310455165573.dkr.ecr.ap-northeast-2.amazonaws.com/redis
+      repository: 310455165573.dkr.ecr.us-west-2.amazonaws.com/redis
       tag: 8.2-alpine
   nginx:
     pullPolicy: IfNotPresent
