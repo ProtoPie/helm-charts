@@ -44,46 +44,34 @@ spec:
                 secretKeyRef:
                   name: user-testing-db-secret
                   key: postgres-password
-            - name: DB_USER_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: user-testing-db-secret
-                  key: password
-          # Health probes temporarily disabled for troubleshooting
-          # EFS storage + PostgreSQL initialization may conflict with early probe checks
-          # livenessProbe:
-          #   exec:
-          #     command:
-          #       - /bin/sh
-          #       - -c
-          #       - exec pg_isready -U {{ .Values.userTesting.db.user | quote }} -d {{ .Values.userTesting.db.database | quote }} -h 127.0.0.1 -p 5432
-          #   initialDelaySeconds: 30
-          #   periodSeconds: 10
-          #   timeoutSeconds: 5
-          #   successThreshold: 1
-          #   failureThreshold: 6
-          # readinessProbe:
-          #   exec:
-          #     command:
-          #       - /bin/sh
-          #       - -c
-          #       - exec pg_isready -U {{ .Values.userTesting.db.user | quote }} -d {{ .Values.userTesting.db.database | quote }} -h 127.0.0.1 -p 5432
-          #   initialDelaySeconds: 5
-          #   periodSeconds: 5
-          #   timeoutSeconds: 3
-          #   successThreshold: 1
-          #   failureThreshold: 3
+            - name: POSTGRESQL_ENABLE_LDAP
+              value: "no"
+            - name: POSTGRESQL_ENABLE_TLS
+              value: "no"
+            - name: POSTGRESQL_LOG_HOSTNAME
+              value: "false"
+            - name: POSTGRESQL_LOG_CONNECTIONS
+              value: "false"
+            - name: POSTGRESQL_LOG_DISCONNECTIONS
+              value: "false"
+          # StartupProbe: Give PostgreSQL up to 10 minutes to initialize on EFS
+          # This prevents liveness probe from killing the pod during slow initialization
+          startupProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - pg_isready -U postgres
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 60  # 60 attempts * 10s = 10 minutes max startup time
           resources:
             {{- toYaml .Values.userTesting.db.resources | nindent 12 }}
           volumeMounts:
             - name: data
               mountPath: /bitnami/postgresql/data
-            - name: init-scripts
-              mountPath: /docker-entrypoint-initdb.d
-      volumes:
-        - name: init-scripts
-          configMap:
-            name: user-testing-db-init-script
   volumeClaimTemplates:
     - metadata:
         name: data
