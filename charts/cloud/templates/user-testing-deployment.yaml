@@ -1,4 +1,4 @@
-{{- if .Values.userTesting.enabled }}
+{{- if and .Values.userTesting.enabled .Values.userTesting.useLegacy }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:

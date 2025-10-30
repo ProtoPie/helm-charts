@@ -1,0 +1,85 @@
+{{- if and .Values.userTesting.enabled (not .Values.userTesting.useLegacy) }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: user-testing-db
+  labels:
+    {{- include "protopie.labels" . | nindent 4 }}
+    app: user-testing-db
+spec:
+  serviceName: user-testing-db
+  replicas: 1
+  selector:
+    matchLabels:
+      app: user-testing-db
+  template:
+    metadata:
+      labels:
+        app: user-testing-db
+    spec:
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: postgresql
+          image: "{{ .Values.image.cloud.userTestingDb.repository }}:{{ .Values.image.cloud.userTestingDb.tag }}"
+          imagePullPolicy: {{ .Values.image.cloud.userTestingDb.pullPolicy }}
+          ports:
+            - name: postgresql
+              containerPort: 5432
+              protocol: TCP
+          env:
+            - name: POSTGRESQL_USERNAME
+              value: {{ .Values.userTesting.db.user | quote }}
+            - name: POSTGRESQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: user-testing-db-secret
+                  key: password
+            - name: POSTGRESQL_DATABASE
+              value: {{ .Values.userTesting.db.database | quote }}
+            - name: POSTGRESQL_POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: user-testing-db-secret
+                  key: postgres-password
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - exec pg_isready -U {{ .Values.userTesting.db.user | quote }} -d {{ .Values.userTesting.db.database | quote }} -h 127.0.0.1 -p 5432
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 6
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - exec pg_isready -U {{ .Values.userTesting.db.user | quote }} -d {{ .Values.userTesting.db.database | quote }} -h 127.0.0.1 -p 5432
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            successThreshold: 1
+            failureThreshold: 3
+          resources:
+            {{- toYaml .Values.userTesting.db.resources | nindent 12 }}
+          volumeMounts:
+            - name: data
+              mountPath: /bitnami/postgresql
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+        labels:
+          app: user-testing-db
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: {{ .Values.userTesting.db.storage }}
+{{- end }}

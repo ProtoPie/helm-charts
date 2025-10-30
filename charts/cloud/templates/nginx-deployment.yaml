@@ -45,12 +45,18 @@ data:
       server ent-cloud-web-svc.{{ .Release.Namespace }}.svc.cluster.local;
     }
 
-    {{- if .Values.userTesting.enabled }}
+    {{- if and .Values.userTesting.enabled .Values.userTesting.useLegacy }}
     upstream user-testing-api_server {
       server ent-cloud-ut-svc.{{ .Release.Namespace }}.svc.cluster.local;
     }
     upstream user-testing-socket_server {
       server ent-cloud-ut-svc.{{ .Release.Namespace }}.svc.cluster.local:8081;
+    }
+    {{- end }}
+
+    {{- if and .Values.userTesting.enabled (not .Values.userTesting.useLegacy) }}
+    upstream user_testing_server {
+      server user-testing-server.{{ .Release.Namespace }}.svc.cluster.local:3030;
     }
     {{- end }}
 
@@ -149,7 +155,8 @@ data:
             proxy_pass http://api_server/;
         }
 
-        {{- if .Values.userTesting.enabled }}
+        {{- if and .Values.userTesting.enabled .Values.userTesting.useLegacy }}
+        # Legacy User Testing (Kotlin/KTOR) - WebSocket endpoint
         location ^~ /user-research/socket {
             rewrite ^/user-research/(.*)$ /$1 break;
             proxy_pass http://user-testing-socket_server;
@@ -157,11 +164,35 @@ data:
             proxy_set_header Connection $connection_upgrade;
         }
 
+        # Legacy User Testing (Kotlin/KTOR) - API endpoint
         location ^~ /user-research {
             rewrite ^/user-research/(.*)$ /$1 break;
             proxy_pass http://user-testing-api_server;
         }
-        {{ end }}
+        {{- end }}
+
+        {{- if and .Values.userTesting.enabled (not .Values.userTesting.useLegacy) }}
+        # User Testing Server - WebSocket endpoint
+        location ^~ /api/uts/socket.io/ {
+            proxy_pass http://user_testing_server/socket.io/;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection $connection_upgrade;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+
+        # User Testing Server - REST API endpoint
+        location ^~ /api/uts/ {
+            proxy_pass http://user_testing_server/;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+        {{- end }}
 
         {{- if .Values.analytics.enabled }}
         # analytics dashboard

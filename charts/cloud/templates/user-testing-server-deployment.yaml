@@ -1,0 +1,111 @@
+{{- if and .Values.userTesting.enabled (not .Values.userTesting.useLegacy) }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-testing-server
+  labels:
+    {{- include "protopie.labels" . | nindent 4 }}
+    app: user-testing-server
+spec:
+  replicas: {{ .Values.userTesting.replicas }}
+  selector:
+    matchLabels:
+      app: user-testing-server
+  template:
+    metadata:
+      labels:
+        app: user-testing-server
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/user-testing-db-secret.yaml") . | sha256sum }}
+    spec:
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- .Values.imagePullSecrets | toYaml | nindent 8 }}
+      {{- else if .Values.imageCredentials }}
+      imagePullSecrets:
+      - name: protopie-private-registry
+      {{- end }}
+      initContainers:
+        - name: migrations
+          image: "{{ .Values.image.cloud.userTesting.repository }}:{{ .Values.image.cloud.userTesting.tag }}"
+          imagePullPolicy: {{ .Values.image.cloud.userTesting.pullPolicy }}
+          command:
+            - sh
+            - -c
+            - |
+              echo "Running Prisma migrations..."
+              npx prisma migrate deploy
+              echo "✅ Migrations completed successfully"
+          env:
+            - name: DATABASE_URL
+              value: "postgresql://{{ .Values.userTesting.db.user }}:$(POSTGRES_PASSWORD)@user-testing-db:5432/{{ .Values.userTesting.db.database }}"
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: user-testing-db-secret
+                  key: password
+          resources:
+            limits:
+              cpu: 500m
+              memory: 512Mi
+            requests:
+              cpu: 100m
+              memory: 256Mi
+      containers:
+        - name: user-testing-server
+          image: "{{ .Values.image.cloud.userTesting.repository }}:{{ .Values.image.cloud.userTesting.tag }}"
+          imagePullPolicy: {{ .Values.image.cloud.userTesting.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 3030
+              protocol: TCP
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: PORT
+              value: "3030"
+            - name: LOG_LEVEL
+              value: {{ .Values.userTesting.logLevel | quote }}
+            - name: DATABASE_URL
+              value: "postgresql://{{ .Values.userTesting.db.user }}:$(POSTGRES_PASSWORD)@user-testing-db:5432/{{ .Values.userTesting.db.database }}"
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: user-testing-db-secret
+                  key: password
+            - name: REDIS_HOST
+              value: "user-testing-redis"
+            - name: REDIS_PORT
+              value: "6379"
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: user-testing-db-secret
+                  key: jwt-secret
+            - name: CLOUD_API_BASE_URL
+              value: {{ .Values.userTesting.cloudApiBaseUrl | quote }}
+            - name: CLOUD_API_USE_MOCK
+              value: {{ .Values.userTesting.cloudApiUseMock | quote }}
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          resources:
+            {{- toYaml .Values.userTesting.resources | nindent 12 }}
+{{- end }}

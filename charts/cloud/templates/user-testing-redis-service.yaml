@@ -1,0 +1,18 @@
+{{- if and .Values.userTesting.enabled (not .Values.userTesting.useLegacy) }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: user-testing-redis
+  labels:
+    {{- include "protopie.labels" . | nindent 4 }}
+    app: user-testing-redis
+spec:
+  type: ClusterIP
+  ports:
+    - port: 6379
+      targetPort: redis
+      protocol: TCP
+      name: redis
+  selector:
+    app: user-testing-redis
+{{- end }}

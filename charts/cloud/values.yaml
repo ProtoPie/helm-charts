@@ -16,6 +16,14 @@ image:
       pullPolicy: IfNotPresent
       repository: 310455165573.dkr.ecr.ap-northeast-2.amazonaws.com/enterprise-cloud
       tag: user-testing-15.8.0
+    userTestingDb:
+      pullPolicy: IfNotPresent
+      repository: 310455165573.dkr.ecr.ap-northeast-2.amazonaws.com/postgresql
+      tag: 16.6.0
+    userTestingRedis:
+      pullPolicy: IfNotPresent
+      repository: 310455165573.dkr.ecr.ap-northeast-2.amazonaws.com/redis
+      tag: 8.2-alpine
   nginx:
     pullPolicy: IfNotPresent
     repository: nginx
@@ -58,7 +66,61 @@ imageCredentials: null
 imagePullSecrets: null
 
 userTesting:
-  enabled: false
+  enabled: false # Set to true to enable User Testing Server deployment
+
+  # Migration flag for backward compatibility
+  # true:  Deploy legacy ent-cloud-ut (Kotlin/KTOR, ports 4444/4445, no db/redis)
+  # false: Deploy new user-testing-server (NestJS, port 3030, requires PostgreSQL + Redis)
+  #
+  # Migration path:
+  # 1. Keep useLegacy: true for existing deployments (no changes)
+  # 2. Test new stack in separate environment with useLegacy: false
+  # 3. Switch production environments one by one
+  # 4. Remove legacy deployment after full migration
+  useLegacy: true
+
+  replicas: 1
+  logLevel: "info"
+  cloudApiBaseUrl: "http://ent-cloud-api-svc:3000"
+  cloudApiUseMock: "false"
+
+  # User Testing Server resources
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "1000m"
+      memory: "2Gi"
+
+  # PostgreSQL Database configuration
+  db:
+    user: "user_testing"
+    database: "user_testing"
+    password: "" # REQUIRED: Set in per-environment values (e.g., values-f1.yaml)
+    postgresPassword: "" # REQUIRED: Set in per-environment values
+    storage: "10Gi"
+
+    resources:
+      requests:
+        cpu: "500m"
+        memory: "1Gi"
+      limits:
+        cpu: "2000m"
+        memory: "2Gi"
+
+  # Redis Cache configuration
+  redis:
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "256Mi"
+      limits:
+        cpu: "500m"
+        memory: "512Mi"
+
+  # JWT Secret for authentication
+  jwtSecret: "" # REQUIRED: Set in per-environment values (openssl rand -base64 32)
 
 analytics:
   enabled: false
