@@ -37,6 +37,9 @@ spec:
             - sh
             - -c
             - |
+              # Construct DATABASE_URL with password from environment
+              export DATABASE_URL="postgresql://{{ .Values.userTesting.db.user }}:${POSTGRES_PASSWORD}@user-testing-db:5432/{{ .Values.userTesting.db.database }}"
+
               echo "⏳ Waiting for database to be ready..."
 
               # Wait for database to be ready (up to 5 minutes)
@@ -66,8 +69,6 @@ spec:
               npx prisma migrate deploy
               echo "✅ Migrations completed successfully"
           env:
-            - name: DATABASE_URL
-              value: "postgresql://{{ .Values.userTesting.db.user }}:$(POSTGRES_PASSWORD)@user-testing-db:5432/{{ .Values.userTesting.db.database }}"
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
@@ -84,6 +85,14 @@ spec:
         - name: user-testing-server
           image: "{{ .Values.image.cloud.userTestingServer.repository }}:{{ .Values.image.cloud.userTestingServer.tag }}"
           imagePullPolicy: {{ .Values.image.cloud.userTestingServer.pullPolicy }}
+          command:
+            - sh
+            - -c
+            - |
+              # Construct DATABASE_URL with password from environment
+              export DATABASE_URL="postgresql://{{ .Values.userTesting.db.user }}:${POSTGRES_PASSWORD}@user-testing-db:5432/{{ .Values.userTesting.db.database }}"
+              # Start the application
+              exec node dist/src/main.js
           ports:
             - name: http
               containerPort: 3030
@@ -95,8 +104,6 @@ spec:
               value: "3030"
             - name: LOG_LEVEL
               value: {{ .Values.userTesting.logLevel | quote }}
-            - name: DATABASE_URL
-              value: "postgresql://{{ .Values.userTesting.db.user }}:$(POSTGRES_PASSWORD)@user-testing-db:5432/{{ .Values.userTesting.db.database }}"
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
