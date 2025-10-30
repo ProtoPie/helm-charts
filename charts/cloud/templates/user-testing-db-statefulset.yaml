@@ -44,28 +44,30 @@ spec:
                 secretKeyRef:
                   name: user-testing-db-secret
                   key: postgres-password
-          livenessProbe:
-            exec:
-              command:
-                - /bin/sh
-                - -c
-                - exec pg_isready -U {{ .Values.userTesting.db.user | quote }} -d {{ .Values.userTesting.db.database | quote }} -h 127.0.0.1 -p 5432
-            initialDelaySeconds: 30
-            periodSeconds: 10
-            timeoutSeconds: 5
-            successThreshold: 1
-            failureThreshold: 6
-          readinessProbe:
-            exec:
-              command:
-                - /bin/sh
-                - -c
-                - exec pg_isready -U {{ .Values.userTesting.db.user | quote }} -d {{ .Values.userTesting.db.database | quote }} -h 127.0.0.1 -p 5432
-            initialDelaySeconds: 5
-            periodSeconds: 5
-            timeoutSeconds: 3
-            successThreshold: 1
-            failureThreshold: 3
+          # Health probes temporarily disabled for troubleshooting
+          # EFS storage + PostgreSQL initialization may conflict with early probe checks
+          # livenessProbe:
+          #   exec:
+          #     command:
+          #       - /bin/sh
+          #       - -c
+          #       - exec pg_isready -U {{ .Values.userTesting.db.user | quote }} -d {{ .Values.userTesting.db.database | quote }} -h 127.0.0.1 -p 5432
+          #   initialDelaySeconds: 30
+          #   periodSeconds: 10
+          #   timeoutSeconds: 5
+          #   successThreshold: 1
+          #   failureThreshold: 6
+          # readinessProbe:
+          #   exec:
+          #     command:
+          #       - /bin/sh
+          #       - -c
+          #       - exec pg_isready -U {{ .Values.userTesting.db.user | quote }} -d {{ .Values.userTesting.db.database | quote }} -h 127.0.0.1 -p 5432
+          #   initialDelaySeconds: 5
+          #   periodSeconds: 5
+          #   timeoutSeconds: 3
+          #   successThreshold: 1
+          #   failureThreshold: 3
           resources:
             {{- toYaml .Values.userTesting.db.resources | nindent 12 }}
           volumeMounts:
