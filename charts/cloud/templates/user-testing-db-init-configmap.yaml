@@ -28,7 +28,7 @@ data:
     fi
 
     echo "⏳ Waiting for PostgreSQL to be ready..."
-    until pg_isready; do
+    until pg_isready -U postgres; do
       echo "PostgreSQL is not ready yet, waiting..."
       sleep 2
     done
@@ -36,8 +36,24 @@ data:
 
     echo "Creating user and database..."
 
-    # Run as the default container user (should have superuser access)
-    psql -v ON_ERROR_STOP=1 --dbname postgres <<-EOSQL
+    # Set PGPASSWORD from the environment variable
+    export PGPASSWORD="${POSTGRESQL_POSTGRES_PASSWORD}"
+
+    echo "Testing connection with password (first 4 chars): ${POSTGRESQL_POSTGRES_PASSWORD: ""
+
+    # Try to connect with explicit password via connection string
+    if PGPASSWORD="${POSTGRESQL_POSTGRES_PASSWORD}" psql -U postgres -d postgres -c "SELECT version();" 2>&1; then
+      echo "✅ Password authentication successful!"
+    else
+      echo "❌ Password authentication failed!"
+      echo "This might mean:"
+      echo "1. The database was initialized with a different password"
+      echo "2. Need to delete PVC and start fresh"
+      exit 1
+    fi
+
+    echo "Proceeding with user creation..."
+    psql -v ON_ERROR_STOP=1 -U postgres -d postgres <<-EOSQL
       -- Create user if not exists
       DO \$\$
       BEGIN
