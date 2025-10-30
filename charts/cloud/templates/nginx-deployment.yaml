@@ -173,7 +173,7 @@ data:
 
         {{- if and .Values.userTesting.enabled (not .Values.userTesting.useLegacy) }}
         # User Testing Server - WebSocket endpoint
-        location ^~ /api/uts/socket.io/ {
+        location ^~ /api/ut/socket.io/ {
             proxy_pass http://user_testing_server/socket.io/;
             proxy_http_version 1.1;
             proxy_set_header Upgrade $http_upgrade;
@@ -185,7 +185,7 @@ data:
         }
 
         # User Testing Server - REST API endpoint
-        location ^~ /api/uts/ {
+        location ^~ /api/ut/ {
             proxy_pass http://user_testing_server/;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
