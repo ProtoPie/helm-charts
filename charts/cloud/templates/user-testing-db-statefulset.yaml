@@ -37,13 +37,6 @@ spec:
                 secretKeyRef:
                   name: user-testing-db-secret
                   key: password
-            - name: POSTGRESQL_DATABASE
-              value: {{ .Values.userTesting.db.database | quote }}
-            - name: POSTGRESQL_POSTGRES_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: user-testing-db-secret
-                  key: postgres-password
             - name: POSTGRESQL_ENABLE_LDAP
               value: "no"
             - name: POSTGRESQL_ENABLE_TLS
@@ -54,15 +47,8 @@ spec:
               value: "false"
             - name: POSTGRESQL_LOG_DISCONNECTIONS
               value: "false"
-            # Force synchronous writes for EFS compatibility
-            - name: POSTGRESQL_SYNCHRONOUS_COMMIT
-              value: "on"
-            - name: POSTGRESQL_FSYNC
-              value: "on"
-            - name: POSTGRESQL_FULL_PAGE_WRITES
-              value: "on"
-          # StartupProbe: Give PostgreSQL up to 10 minutes to initialize on EFS
-          # This prevents liveness probe from killing the pod during slow initialization
+          # StartupProbe: EFS initialization takes 10-15 minutes (vs 30 seconds on EBS)
+          # CREATE DATABASE copies template files over network, which is very slow
           startupProbe:
             exec:
               command:
