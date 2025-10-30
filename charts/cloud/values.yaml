@@ -85,7 +85,7 @@ userTesting:
 
   replicas: 1
   logLevel: "info"
-  cloudApiBaseUrl: "http://ent-cloud-api-svc:3000"
+  cloudApiBaseUrl: "http://ent-cloud-api-svc"
   useMockCloudApi: "false"
   jwtExpiresIn: "1d"
 
