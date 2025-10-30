@@ -86,7 +86,6 @@ userTesting:
   replicas: 1
   logLevel: "info"
   cloudApiBaseUrl: "http://ent-cloud-api-svc:3000"
-  cloudApiServiceKey: thisshouldberandomkeybetweentwoserver
   useMockCloudApi: "false"
   jwtExpiresIn: "1d"
 
