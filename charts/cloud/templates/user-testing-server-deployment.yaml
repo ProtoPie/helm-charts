@@ -37,7 +37,32 @@ spec:
             - sh
             - -c
             - |
-              echo "Running Prisma migrations..."
+              echo "⏳ Waiting for database to be ready..."
+
+              # Wait for database to be ready (up to 5 minutes)
+              MAX_RETRIES=60
+              RETRY_COUNT=0
+
+              while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+                echo "Attempt $((RETRY_COUNT + 1))/$MAX_RETRIES: Testing database connection..."
+
+                if npx prisma db execute --stdin <<< "SELECT 1" 2>/dev/null; then
+                  echo "✅ Database is ready!"
+                  break
+                fi
+
+                RETRY_COUNT=$((RETRY_COUNT + 1))
+
+                if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
+                  echo "❌ Database not ready after $MAX_RETRIES attempts"
+                  exit 1
+                fi
+
+                echo "Database not ready yet, waiting 5 seconds..."
+                sleep 5
+              done
+
+              echo "🚀 Running Prisma migrations..."
               npx prisma migrate deploy
               echo "✅ Migrations completed successfully"
           env:
