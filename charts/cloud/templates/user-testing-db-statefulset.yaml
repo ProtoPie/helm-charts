@@ -37,6 +37,13 @@ spec:
                 secretKeyRef:
                   name: user-testing-db-secret
                   key: password
+            - name: POSTGRESQL_DATABASE
+              value: {{ .Values.userTesting.db.database | quote }}
+            - name: POSTGRESQL_POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: user-testing-db-secret
+                  key: postgres-password
             - name: POSTGRESQL_ENABLE_LDAP
               value: "no"
             - name: POSTGRESQL_ENABLE_TLS
