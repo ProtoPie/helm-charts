@@ -104,6 +104,7 @@ userTesting:
     password: "" # REQUIRED: Set in per-environment values (e.g., values-f1.yaml)
     postgresPassword: "" # REQUIRED: Set in per-environment values
     storage: "10Gi"
+    storageClassName: ""
 
     resources:
       requests:

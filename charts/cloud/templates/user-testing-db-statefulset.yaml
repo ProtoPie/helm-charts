@@ -82,4 +82,7 @@ spec:
         resources:
           requests:
             storage: {{ .Values.userTesting.db.storage }}
+        {{- if .Values.userTesting.db.storageClassName }}
+        storageClassName: {{ .Values.userTesting.db.storageClassName }}
+        {{- end }}
 {{- end }}
