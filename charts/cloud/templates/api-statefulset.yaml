@@ -78,6 +78,13 @@ spec:
                 secretKeyRef:
                   name: db-secret
                   key: write-password
+            {{- if and .Values.userTesting.enabled (not .Values.userTesting.useLegacy) }}
+            - name: USER_TESTING_SERVICE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: user-testing-app-secret
+                  key: cloud-api-service-key
+            {{- end }}
             {{- with .Values.cloud.envs }}
               {{- toYaml . | nindent 12 }}
             {{- end }}
