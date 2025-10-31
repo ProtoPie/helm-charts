@@ -295,6 +295,8 @@ spec:
       app: nginx
   template:
     metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/nginx-deployment.yaml") . | sha256sum }}
       labels:
         app: nginx
     spec:
