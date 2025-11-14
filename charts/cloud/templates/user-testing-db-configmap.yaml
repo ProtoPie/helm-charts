@@ -1,0 +1,147 @@
+{{- if and .Values.userTesting.enabled (not .Values.userTesting.useLegacy) }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: user-testing-db-config
+  labels:
+    {{- include "protopie.labels" . | nindent 4 }}
+    app: user-testing-db
+data:
+  postgresql-large-payload.conf: |
+    # ═══════════════════════════════════════════════════════════════
+    # PostgreSQL Configuration for Large JSONB Payloads (>255MB)
+    # ═══════════════════════════════════════════════════════════════
+    # Related: ADR-025 (PostgreSQL Large JSONB Configuration)
+    #          ADR-018 (Large Payload Storage Strategy)
+    #          ADR-019 (HTTP Large Payload Configuration)
+    # Deployed via Helm Chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    # Environment: {{ .Release.Namespace }}
+    # Last Updated: November 14, 2025
+    # ═══════════════════════════════════════════════════════════════
+    #
+    # PURPOSE:
+    # This configuration prepares PostgreSQL to handle theoretical maximum
+    # ProtoPie recordings (>255MB) while maintaining optimal performance for
+    # typical workloads (1-10MB). Current HTTP/application limits remain at
+    # 20MB/10MB, making this defensive architecture for future requirements.
+    #
+    # IMPORTANT:
+    # - Bitnami PostgreSQL automatically includes configs from /bitnami/postgresql/conf/conf.d/
+    # - Values are templated from Helm values.yaml for environment flexibility
+    # - Monitor PostgreSQL memory usage after deployment
+    # ═══════════════════════════════════════════════════════════════
+
+    # ─────────────────────────────────────────────────────────────
+    # Write-Ahead Log (WAL) Configuration
+    # ─────────────────────────────────────────────────────────────
+    # Large JSONB inserts generate significant WAL traffic:
+    # - 255MB uncompressed payload → ~150-200MB WAL records
+    # - Includes TOAST chunks, metadata, indexes
+
+    max_wal_size = {{ .Values.userTesting.db.config.maxWalSize | default "4GB" }}
+    # Default: 1GB
+    # Allows: ~20-30 concurrent 255MB uploads without WAL pressure
+
+    min_wal_size = {{ .Values.userTesting.db.config.minWalSize | default "1GB" }}
+    # Default: 80MB
+    # Maintains: WAL buffer for burst traffic
+
+    checkpoint_completion_target = {{ .Values.userTesting.db.config.checkpointCompletionTarget | default "0.9" }}
+    # Default: 0.5
+    # Effect: Spread checkpoint writes over 90% of interval
+
+    # ─────────────────────────────────────────────────────────────
+    # Memory Configuration
+    # ─────────────────────────────────────────────────────────────
+
+    shared_buffers = {{ .Values.userTesting.db.config.sharedBuffers | default "4GB" }}
+    # Recommendation: 25% of pod memory (assuming 16GB pod)
+    # Purpose: Cache scenario metadata, small recordings, indexes
+    # IMPORTANT: Ensure pod memory limits accommodate this value
+
+    work_mem = {{ .Values.userTesting.db.config.workMem | default "256MB" }}
+    # Default: 4MB
+    # Purpose: Memory for sort/hash operations per query
+    # WARNING: Per-operation memory allocation!
+    #   10 concurrent queries = up to 2.56GB total
+
+    maintenance_work_mem = {{ .Values.userTesting.db.config.maintenanceWorkMem | default "1GB" }}
+    # Default: 64MB
+    # Purpose: Memory for VACUUM, CREATE INDEX, ALTER TABLE
+    # Impact: Faster TOAST table maintenance
+
+    # ─────────────────────────────────────────────────────────────
+    # TOAST Compression Configuration
+    # ─────────────────────────────────────────────────────────────
+
+    {{- if .Values.userTesting.db.config.toastCompression }}
+    # PostgreSQL 14+ supports lz4 compression (faster than default pglz)
+    toast_compression = {{ .Values.userTesting.db.config.toastCompression }}
+    # Trade-off: 8% more storage for 3-4x faster read performance
+    {{- else }}
+    # Using default pglz compression (better compression ratio, slower)
+    # Uncomment to enable lz4 (PostgreSQL 14+):
+    # toast_compression = lz4
+    {{- end }}
+
+    # ─────────────────────────────────────────────────────────────
+    # Query Performance Configuration
+    # ─────────────────────────────────────────────────────────────
+
+    max_parallel_workers_per_gather = {{ .Values.userTesting.db.config.maxParallelWorkers | default "4" }}
+    # Default: 2
+    # Purpose: Parallelize large table scans
+    # Impact: 2-4x faster aggregate queries
+
+    effective_cache_size = {{ .Values.userTesting.db.config.effectiveCacheSize | default "12GB" }}
+    # Recommendation: 75% of pod memory (assuming 16GB pod)
+    # Purpose: Query planner hint about OS cache availability
+
+    # ─────────────────────────────────────────────────────────────
+    # Connection and Resource Limits
+    # ─────────────────────────────────────────────────────────────
+
+    max_connections = {{ .Values.userTesting.db.config.maxConnections | default "100" }}
+    # Default: 100
+    # WARNING: 100 connections × 256MB work_mem = 25.6GB max!
+    # Recommendation: Use connection pooling (PgBouncer)
+
+    temp_file_limit = {{ .Values.userTesting.db.config.tempFileLimit | default "5GB" }}
+    # Default: -1 (unlimited)
+    # Purpose: Prevent runaway queries from filling disk
+
+    # ─────────────────────────────────────────────────────────────
+    # Timeout Configuration
+    # ─────────────────────────────────────────────────────────────
+
+    statement_timeout = {{ .Values.userTesting.db.config.statementTimeout | default "120000" }}
+    # Value: 120000ms = 2 minutes
+    # Purpose: Prevent hung connections during large JSONB operations
+
+    # ─────────────────────────────────────────────────────────────
+    # Logging and Monitoring
+    # ─────────────────────────────────────────────────────────────
+
+    log_min_duration_statement = {{ .Values.userTesting.db.config.logMinDuration | default "5000" }}
+    # Value: 5000ms = 5 seconds
+    # Purpose: Log slow queries for performance analysis
+
+    log_autovacuum_min_duration = {{ .Values.userTesting.db.config.logAutovacuumMinDuration | default "1000" }}
+    # Value: 1000ms = 1 second
+    # Purpose: Log VACUUM operations on TOAST tables
+
+    log_checkpoints = {{ .Values.userTesting.db.config.logCheckpoints | default "on" }}
+    # Purpose: Log checkpoint activity to identify WAL pressure
+
+    log_temp_files = {{ .Values.userTesting.db.config.logTempFiles | default "102400" }}
+    # Value: 102400KB = 100MB
+    # Purpose: Log temp file creation (work_mem exhaustion)
+
+    # ═══════════════════════════════════════════════════════════════
+    # End of Configuration
+    # ═══════════════════════════════════════════════════════════════
+    # Validation: After deployment, verify parameters with:
+    #   kubectl exec -n {{ .Release.Namespace }} user-testing-db-0 -- \
+    #     psql -U postgres -c "SHOW shared_buffers; SHOW work_mem;"
+    # ═══════════════════════════════════════════════════════════════
+{{- end }}

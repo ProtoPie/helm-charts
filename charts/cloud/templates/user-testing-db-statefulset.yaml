@@ -73,6 +73,13 @@ spec:
             - name: data
               mountPath: /bitnami/postgresql/data
               subPath: {{ .Values.userTesting.db.storageVersion | quote }}
+            - name: postgres-config
+              mountPath: /bitnami/postgresql/conf/conf.d
+              readOnly: true
+      volumes:
+        - name: postgres-config
+          configMap:
+            name: user-testing-db-config
   volumeClaimTemplates:
     - metadata:
         name: data

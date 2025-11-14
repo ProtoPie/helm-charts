@@ -113,10 +113,47 @@ userTesting:
     resources:
       requests:
         cpu: "500m"
-        memory: "1Gi"
+        memory: "4Gi" # Increased for large JSONB payload support
       limits:
         cpu: "2000m"
-        memory: "2Gi"
+        memory: "8Gi" # Minimum for shared_buffers=4GB + work_mem overhead
+        # For production with high load, consider 16Gi
+
+    # PostgreSQL Configuration for Large JSONB Payloads (>255MB)
+    # Related: ADR-025, ADR-018, ADR-019
+    # These values configure PostgreSQL to handle theoretical maximum
+    # ProtoPie recordings while maintaining optimal performance for
+    # typical 1-10MB workloads. Current HTTP limits remain at 20MB/10MB.
+    config:
+      # Write-Ahead Log Configuration
+      maxWalSize: "4GB" # Default: 1GB
+      minWalSize: "1GB" # Default: 80MB
+      checkpointCompletionTarget: "0.9" # Default: 0.5
+
+      # Memory Configuration
+      sharedBuffers: "4GB" # 25% of 16GB (adjust for pod memory)
+      workMem: "256MB" # Default: 4MB (per-operation!)
+      maintenanceWorkMem: "1GB" # Default: 64MB
+      effectiveCacheSize: "12GB" # 75% of 16GB (query planner hint)
+
+      # Connection Limits
+      maxConnections: "100" # Default: 100
+      tempFileLimit: "5GB" # Default: -1 (unlimited)
+
+      # Timeouts
+      statementTimeout: "120000" # 120s = 2 minutes
+
+      # Performance
+      maxParallelWorkers: "4" # Default: 2
+
+      # Logging (for monitoring)
+      logMinDuration: "5000" # Log queries >5s
+      logAutovacuumMinDuration: "1000" # Log VACUUM >1s
+      logCheckpoints: "on" # Log checkpoint activity
+      logTempFiles: "102400" # Log temp files >100MB
+
+      # TOAST Compression (optional)
+      toastCompression: "lz4" # Uncomment for PostgreSQL 14+ (faster, slightly larger)
 
   # Redis Cache configuration
   redis:
