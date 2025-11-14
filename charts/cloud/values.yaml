@@ -152,8 +152,11 @@ userTesting:
       logCheckpoints: "on" # Log checkpoint activity
       logTempFiles: "102400" # Log temp files >100MB
 
-      # TOAST Compression (optional)
-      toastCompression: "lz4" # Uncomment for PostgreSQL 14+ (faster, slightly larger)
+      # TOAST Compression (optional - may not be supported by all builds)
+      # IMPORTANT: Bitnami PostgreSQL images may not support this parameter
+      # Leave commented out. For better compression, use per-table ALTER:
+      # ALTER TABLE scenarios ALTER COLUMN recording_data SET COMPRESSION lz4;
+      # toastCompression: "lz4"
 
   # Redis Cache configuration
   redis:

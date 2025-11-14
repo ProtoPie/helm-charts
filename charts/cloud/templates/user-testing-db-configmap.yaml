@@ -73,15 +73,19 @@ data:
     # ─────────────────────────────────────────────────────────────
     # TOAST Compression Configuration
     # ─────────────────────────────────────────────────────────────
-
-    {{- if .Values.userTesting.db.config.toastCompression }}
-    # PostgreSQL 14+ supports lz4 compression (faster than default pglz)
-    toast_compression = {{ .Values.userTesting.db.config.toastCompression }}
-    # Trade-off: 8% more storage for 3-4x faster read performance
-    {{- else }}
+    # NOTE: toast_compression parameter may not be supported in all
+    # PostgreSQL builds. Bitnami images may not recognize this parameter.
+    # Leave commented out unless you've verified your PostgreSQL version
+    # and build supports it.
+    #
     # Using default pglz compression (better compression ratio, slower)
-    # Uncomment to enable lz4 (PostgreSQL 14+):
-    # toast_compression = lz4
+    # To enable lz4 (PostgreSQL 14+ with lz4 support compiled in):
+    # 1. Verify support: SELECT * FROM pg_available_extensions WHERE name = 'lz4';
+    # 2. Uncomment in values.yaml: toastCompression: "lz4"
+    # 3. Per-column override alternative (safer):
+    #    ALTER TABLE scenarios ALTER COLUMN recording_data SET COMPRESSION lz4;
+    {{- if .Values.userTesting.db.config.toastCompression }}
+    # toast_compression = {{ .Values.userTesting.db.config.toastCompression }}
     {{- end }}
 
     # ─────────────────────────────────────────────────────────────
