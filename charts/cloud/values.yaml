@@ -88,6 +88,7 @@ userTesting:
   cloudApiBaseUrl: "http://ent-cloud-api-svc"
   useMockCloudApi: "false"
   jwtExpiresIn: "1d"
+  webStaticRoomUrl: "" # REQUIRED
 
   # User Testing Server resources
   resources:

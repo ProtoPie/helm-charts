@@ -140,6 +140,8 @@ spec:
                   key: cloud-api-service-key
             - name: USE_MOCK_CLOUD_API
               value: {{ .Values.userTesting.useMockCloudApi | quote }}
+            - name: WEB_STATIC_ROOM_URL
+              value: {{ .Values.userTesting.webStaticRoomUrl | quote }}
           livenessProbe:
             httpGet:
               path: /health
