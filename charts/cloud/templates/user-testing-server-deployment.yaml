@@ -131,6 +131,11 @@ spec:
                 secretKeyRef:
                   name: user-testing-app-secret
                   key: jwt-secret
+            - name: JWT_PARTICIPANT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: user-testing-app-secret
+                  key: jwt-secret
             - name: JWT_EXPIRES_IN
               value: {{ .Values.userTesting.jwtExpiresIn | quote }}
             - name: CLOUD_API_BASE_URL
