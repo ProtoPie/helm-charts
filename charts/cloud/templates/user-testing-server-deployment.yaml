@@ -124,6 +124,8 @@ spec:
               value: "user-testing-redis"
             - name: REDIS_PORT
               value: "6379"
+            - name: BROADCAST_PROVIDER
+              value: "redis"
             - name: JWT_SECRET
               valueFrom:
                 secretKeyRef:
