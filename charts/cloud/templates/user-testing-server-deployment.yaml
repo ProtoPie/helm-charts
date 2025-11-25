@@ -126,6 +126,8 @@ spec:
               value: "6379"
             - name: BROADCAST_PROVIDER
               value: "redis"
+            - name: PRESENCE_PROVIDER
+              value: "redis"
             - name: JWT_SECRET
               valueFrom:
                 secretKeyRef:
