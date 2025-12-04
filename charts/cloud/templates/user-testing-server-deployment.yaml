@@ -151,6 +151,8 @@ spec:
               value: {{ .Values.userTesting.useMockCloudApi | quote }}
             - name: WEB_STATIC_ROOM_URL
               value: {{ .Values.userTesting.webStaticRoomUrl | quote }}
+            - name: ADMIN_TOOL
+              value: "true"
           livenessProbe:
             httpGet:
               path: /health
