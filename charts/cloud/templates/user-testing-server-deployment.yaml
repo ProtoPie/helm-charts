@@ -153,6 +153,8 @@ spec:
               value: {{ .Values.userTesting.webStaticRoomUrl | quote }}
             - name: ADMIN_TOOL
               value: "true"
+            - name: ANALYSIS_STORE_ALIGNMENT
+              value: "true"
           livenessProbe:
             httpGet:
               path: /health
