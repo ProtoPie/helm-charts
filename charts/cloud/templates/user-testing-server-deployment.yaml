@@ -153,6 +153,10 @@ spec:
               value: {{ .Values.userTesting.webStaticRoomUrl | quote }}
             - name: ADMIN_TOOL
               value: "true"
+            - name: ADMIN_USERNAME
+              value: admin
+            - name: ADMIN_PASSWORD
+              value: admin123
             - name: ANALYSIS_STORE_ALIGNMENT
               value: "true"
           livenessProbe:
