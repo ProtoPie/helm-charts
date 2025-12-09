@@ -175,6 +175,9 @@ userTesting:
   # Cloud-API Service Key for server-to-server authentication
   cloudApiServiceKey: "" # REQUIRED: Set in per-environment values (obtain from cloud-api team)
 
+ciliumNetworkPolicy:
+  enabled: false
+
 analytics:
   enabled: false
   web:

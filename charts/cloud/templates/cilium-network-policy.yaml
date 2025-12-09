@@ -1,0 +1,228 @@
+{{- if .Values.ciliumNetworkPolicy.enabled }}
+# Cilium Network Policies
+# NGINX is fully open (routing layer)
+# Backend services (API, Web, DB) are protected with mTLS
+# Reference: https://docs.cilium.io/en/stable/security/policy/
+
+---
+# Policy 1: Protect API Pod
+# Allows access from NGINX, UT, and Analytics Web pods with mTLS
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: api-ingress-policy
+  namespace: {{ .Release.Namespace }}
+spec:
+  endpointSelector:
+    matchLabels:
+      app: ent-cloud-api
+  ingress:
+    # Allow traffic from NGINX, UT, and Analytics Web pods (mTLS required)
+    - fromEndpoints:
+        - matchLabels:
+            app: nginx
+        {{- if .Values.userTesting.enabled }}
+        - matchLabels:
+            app: ent-cloud-ut
+        {{- end }}
+        {{- if .Values.analytics.enabled }}
+        - matchLabels:
+            app: ent-analytics-web
+        {{- end }}
+      authentication:
+        mode: "required"
+      toPorts:
+        - ports:
+            - port: "3333"
+              protocol: TCP
+
+    # Allow health checks from kubelet
+    - fromEntities:
+        - "host"
+      toPorts:
+        - ports:
+            - port: "3333"
+              protocol: TCP
+
+---
+# Policy 2: Protect Web Pod
+# Only allows access from NGINX pod with mTLS
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: web-ingress-policy
+  namespace: {{ .Release.Namespace }}
+spec:
+  endpointSelector:
+    matchLabels:
+      app: ent-cloud-web
+  ingress:
+    # Allow traffic from NGINX pod only (mTLS required)
+    - fromEndpoints:
+        - matchLabels:
+            app: nginx
+      authentication:
+        mode: "required"
+      toPorts:
+        - ports:
+            - port: "3000"
+              protocol: TCP
+
+    # Allow health checks from kubelet
+    - fromEntities:
+        - "host"
+      toPorts:
+        - ports:
+            - port: "3000"
+              protocol: TCP
+
+---
+# Policy 3: Protect Database Pod
+# Allows access from API and Analytics API pods with mTLS (most critical!)
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: db-access-policy
+  namespace: {{ .Release.Namespace }}
+spec:
+  endpointSelector:
+    matchLabels:
+      app: db
+  ingress:
+    # Allow API, User Testing, and Analytics API pods to access DB (mTLS required)
+    - fromEndpoints:
+        - matchLabels:
+            app: ent-cloud-api
+        {{- if .Values.userTesting.enabled }}
+        - matchLabels:
+            app: ent-cloud-ut
+        {{- end }}
+        {{- if .Values.analytics.enabled }}
+        - matchLabels:
+            app: ent-analytics-api
+        {{- end }}
+      authentication:
+        mode: "required"
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
+
+    # Allow health checks from kubelet
+    - fromEntities:
+        - "host"
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
+
+{{- if .Values.userTesting.enabled }}
+---
+# Policy 4: Protect User Testing Pod
+# Only allows access from NGINX pod with mTLS
+# Supports WebSocket connections on port 8081
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: user-testing-ingress-policy
+  namespace: {{ .Release.Namespace }}
+spec:
+  endpointSelector:
+    matchLabels:
+      app: ent-cloud-ut
+  ingress:
+    # Allow HTTP and WebSocket traffic from NGINX pod only (mTLS required)
+    - fromEndpoints:
+        - matchLabels:
+            app: nginx
+      authentication:
+        mode: "required"
+      toPorts:
+        # HTTP API (service port 80 → pod port 4444)
+        - ports:
+            - port: "4444"
+              protocol: TCP
+        # WebSocket (service port 8081 → pod port 4445)
+        - ports:
+            - port: "4445"
+              protocol: TCP
+
+    # Allow health checks from kubelet
+    - fromEntities:
+        - "host"
+      toPorts:
+        - ports:
+            - port: "4444"
+              protocol: TCP
+            - port: "4445"
+              protocol: TCP
+{{- end }}
+
+{{- if .Values.analytics.enabled }}
+---
+# Policy 5: Protect Analytics Web Pod
+# Only allows access from NGINX pod with mTLS
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: analytics-web-ingress-policy
+  namespace: {{ .Release.Namespace }}
+spec:
+  endpointSelector:
+    matchLabels:
+      app: ent-analytics-web
+  ingress:
+    # Allow traffic from NGINX pod only (mTLS required)
+    - fromEndpoints:
+        - matchLabels:
+            app: nginx
+      authentication:
+        mode: "required"
+      toPorts:
+        - ports:
+            - port: "8050"
+              protocol: TCP
+
+    # Allow health checks from kubelet
+    - fromEntities:
+        - "host"
+      toPorts:
+        - ports:
+            - port: "8050"
+              protocol: TCP
+
+---
+# Policy 6: Protect Analytics API Pod
+# Allows access from NGINX and Analytics Web pods with mTLS
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: analytics-api-ingress-policy
+  namespace: {{ .Release.Namespace }}
+spec:
+  endpointSelector:
+    matchLabels:
+      app: ent-analytics-api
+  ingress:
+    # Allow traffic from NGINX and Analytics Web pods (mTLS required)
+    - fromEndpoints:
+        - matchLabels:
+            app: nginx
+        - matchLabels:
+            app: ent-analytics-web
+      authentication:
+        mode: "required"
+      toPorts:
+        - ports:
+            - port: "8000"
+              protocol: TCP
+
+    # Allow health checks from kubelet
+    - fromEntities:
+        - "host"
+      toPorts:
+        - ports:
+            - port: "8000"
+              protocol: TCP
+{{- end }}
+{{- end }}
