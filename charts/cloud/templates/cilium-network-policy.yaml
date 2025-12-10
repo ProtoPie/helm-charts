@@ -21,9 +21,13 @@ spec:
     - fromEndpoints:
         - matchLabels:
             app: nginx
-        {{- if .Values.userTesting.enabled }}
+        {{- if and .Values.userTesting.enabled .Values.userTesting.useLegacy }}
         - matchLabels:
             app: ent-cloud-ut
+        {{- end }}
+        {{- if and .Values.userTesting.enabled (not .Values.userTesting.useLegacy) }}
+        - matchLabels:
+            app: user-testing-server
         {{- end }}
         {{- if .Values.analytics.enabled }}
         - matchLabels:
@@ -77,7 +81,7 @@ spec:
               protocol: TCP
 
 ---
-# Policy 3: Protect Database Pod
+# Policy 3: Protect Database Pod (Main Cloud DB)
 # Allows access from API and Analytics API pods with mTLS (most critical!)
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
@@ -93,7 +97,7 @@ spec:
     - fromEndpoints:
         - matchLabels:
             app: ent-cloud-api
-        {{- if .Values.userTesting.enabled }}
+        {{- if and .Values.userTesting.enabled .Values.userTesting.useLegacy }}
         - matchLabels:
             app: ent-cloud-ut
         {{- end }}
@@ -116,15 +120,15 @@ spec:
             - port: "5432"
               protocol: TCP
 
-{{- if .Values.userTesting.enabled }}
+{{- if and .Values.userTesting.enabled .Values.userTesting.useLegacy }}
 ---
-# Policy 4: Protect User Testing Pod
+# Policy 4a: Protect Legacy User Testing Pod (ent-cloud-ut)
 # Only allows access from NGINX pod with mTLS
 # Supports WebSocket connections on port 8081
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
-  name: user-testing-ingress-policy
+  name: user-testing-legacy-ingress-policy
   namespace: {{ .Release.Namespace }}
 spec:
   endpointSelector:
@@ -155,6 +159,105 @@ spec:
             - port: "4444"
               protocol: TCP
             - port: "4445"
+              protocol: TCP
+{{- end }}
+
+{{- if and .Values.userTesting.enabled (not .Values.userTesting.useLegacy) }}
+---
+# Policy 4b: Protect User Testing Server (new NestJS version)
+# Only allows access from NGINX pod with mTLS
+# Port 3030 for REST API and WebSocket (Socket.IO)
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: user-testing-server-ingress-policy
+  namespace: {{ .Release.Namespace }}
+spec:
+  endpointSelector:
+    matchLabels:
+      app: user-testing-server
+  ingress:
+    # Allow HTTP and WebSocket traffic from NGINX pod only (mTLS required)
+    - fromEndpoints:
+        - matchLabels:
+            app: nginx
+      authentication:
+        mode: "required"
+      toPorts:
+        - ports:
+            - port: "3030"
+              protocol: TCP
+
+    # Allow health checks from kubelet
+    - fromEntities:
+        - "host"
+      toPorts:
+        - ports:
+            - port: "3030"
+              protocol: TCP
+
+---
+# Policy 4c: Protect User Testing Database
+# Only allows access from user-testing-server with mTLS
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: user-testing-db-ingress-policy
+  namespace: {{ .Release.Namespace }}
+spec:
+  endpointSelector:
+    matchLabels:
+      app: user-testing-db
+  ingress:
+    # Allow traffic from user-testing-server only (mTLS required)
+    - fromEndpoints:
+        - matchLabels:
+            app: user-testing-server
+      authentication:
+        mode: "required"
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
+
+    # Allow health checks from kubelet
+    - fromEntities:
+        - "host"
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
+
+---
+# Policy 4d: Protect User Testing Redis
+# Only allows access from user-testing-server with mTLS
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: user-testing-redis-ingress-policy
+  namespace: {{ .Release.Namespace }}
+spec:
+  endpointSelector:
+    matchLabels:
+      app: user-testing-redis
+  ingress:
+    # Allow traffic from user-testing-server only (mTLS required)
+    - fromEndpoints:
+        - matchLabels:
+            app: user-testing-server
+      authentication:
+        mode: "required"
+      toPorts:
+        - ports:
+            - port: "6379"
+              protocol: TCP
+
+    # Allow health checks from kubelet
+    - fromEntities:
+        - "host"
+      toPorts:
+        - ports:
+            - port: "6379"
               protocol: TCP
 {{- end }}
 
