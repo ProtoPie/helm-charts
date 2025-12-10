@@ -5,7 +5,6 @@ metadata:
   name: user-testing-server
   labels:
     {{- include "protopie.labels" . | nindent 4 }}
-    app: user-testing-server
 spec:
   replicas: {{ .Values.userTesting.replicas }}
   selector:
@@ -169,7 +168,7 @@ spec:
             failureThreshold: 3
           readinessProbe:
             httpGet:
-              path: /health
+              path: /health/ready
               port: http
             initialDelaySeconds: 10
             periodSeconds: 5
