@@ -165,8 +165,8 @@ spec:
 {{- if and .Values.userTesting.enabled (not .Values.userTesting.useLegacy) }}
 ---
 # Policy 4b: Protect User Testing Server (new NestJS version)
-# Ingress: allows access from NGINX pod with mTLS
-# Egress: allows access to Redis, DB, and Cloud API with mTLS
+# Only allows access from NGINX pod with mTLS
+# Port 3030 for REST API and WebSocket (Socket.IO)
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -194,41 +194,6 @@ spec:
         - ports:
             - port: "3030"
               protocol: TCP
-  egress:
-    # Allow access to Redis (mTLS required)
-    - toEndpoints:
-        - matchLabels:
-            app: user-testing-redis
-      authentication:
-        mode: "required"
-      toPorts:
-        - ports:
-            - port: "6379"
-              protocol: TCP
-    # Allow access to DB (mTLS required)
-    - toEndpoints:
-        - matchLabels:
-            app: user-testing-db
-      authentication:
-        mode: "required"
-      toPorts:
-        - ports:
-            - port: "5432"
-              protocol: TCP
-    # Allow access to Cloud API (mTLS required)
-    - toEndpoints:
-        - matchLabels:
-            app: ent-cloud-api
-      authentication:
-        mode: "required"
-      toPorts:
-        - ports:
-            - port: "3333"
-              protocol: TCP
-    # Allow access to kube-apiserver and host
-    - toEntities:
-        - kube-apiserver
-        - host
 
 ---
 # Policy 4c: Protect User Testing Database
