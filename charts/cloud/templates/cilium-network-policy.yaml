@@ -5,6 +5,38 @@
 # Reference: https://docs.cilium.io/en/stable/security/policy/
 
 ---
+# Policy 0: Base Egress Policy for All Pods
+# Allows DNS, health checks, and external access
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: base-egress-policy
+  namespace: {{ .Release.Namespace }}
+spec:
+  endpointSelector: {}
+  egress:
+    # Allow DNS queries to kube-dns
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: kube-system
+            k8s-app: kube-dns
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+            - port: "53"
+              protocol: TCP
+    # Allow egress to host (kubelet health checks, node services)
+    - toEntities:
+        - host
+    # Allow egress to other pods in the cluster
+    - toEntities:
+        - cluster
+    # Allow egress to external (ECR, external APIs, etc.)
+    - toEntities:
+        - world
+
+---
 # Policy 1: Protect API Pod
 # Allows access from NGINX, UT, and Analytics Web pods with mTLS
 apiVersion: cilium.io/v2
@@ -39,10 +71,9 @@ spec:
         - ports:
             - port: "3333"
               protocol: TCP
-
-    # Allow health checks from kubelet
+    # Allow health checks from kubelet (host → pod)
     - fromEntities:
-        - "host"
+        - host
       toPorts:
         - ports:
             - port: "3333"
@@ -71,10 +102,9 @@ spec:
         - ports:
             - port: "3000"
               protocol: TCP
-
-    # Allow health checks from kubelet
+    # Allow health checks from kubelet (host → pod)
     - fromEntities:
-        - "host"
+        - host
       toPorts:
         - ports:
             - port: "3000"
@@ -111,10 +141,9 @@ spec:
         - ports:
             - port: "5432"
               protocol: TCP
-
-    # Allow health checks from kubelet
+    # Allow health checks from kubelet (host → pod)
     - fromEntities:
-        - "host"
+        - host
       toPorts:
         - ports:
             - port: "5432"
@@ -150,10 +179,9 @@ spec:
         - ports:
             - port: "4445"
               protocol: TCP
-
-    # Allow health checks from kubelet
+    # Allow health checks from kubelet (host → pod)
     - fromEntities:
-        - "host"
+        - host
       toPorts:
         - ports:
             - port: "4444"
@@ -187,7 +215,7 @@ spec:
         - ports:
             - port: "3030"
               protocol: TCP
-    # Allow health checks from kubelet
+    # Allow health checks from kubelet (host → pod)
     - fromEntities:
         - host
       toPorts:
@@ -218,7 +246,7 @@ spec:
         - ports:
             - port: "5432"
               protocol: TCP
-    # Allow health checks from kubelet
+    # Allow health checks from kubelet (host → pod)
     - fromEntities:
         - host
       toPorts:
@@ -249,7 +277,7 @@ spec:
         - ports:
             - port: "6379"
               protocol: TCP
-    # Allow health checks from kubelet
+    # Allow health checks from kubelet (host → pod)
     - fromEntities:
         - host
       toPorts:
@@ -282,10 +310,9 @@ spec:
         - ports:
             - port: "8050"
               protocol: TCP
-
-    # Allow health checks from kubelet
+    # Allow health checks from kubelet (host → pod)
     - fromEntities:
-        - "host"
+        - host
       toPorts:
         - ports:
             - port: "8050"
@@ -316,10 +343,9 @@ spec:
         - ports:
             - port: "8000"
               protocol: TCP
-
-    # Allow health checks from kubelet
+    # Allow health checks from kubelet (host → pod)
     - fromEntities:
-        - "host"
+        - host
       toPorts:
         - ports:
             - port: "8000"
