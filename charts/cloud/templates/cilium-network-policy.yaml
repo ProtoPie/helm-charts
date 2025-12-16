@@ -1,12 +1,12 @@
 {{- if .Values.ciliumNetworkPolicy.enabled }}
-# Cilium Network Policies
+# Cilium Network Policies with SPIFFE mTLS
 # NGINX is fully open (routing layer)
-# Backend services (API, Web, DB) are protected with mTLS
+# Backend services are protected with mTLS via SPIFFE IDs
 # Reference: https://docs.cilium.io/en/stable/security/policy/
 
 ---
 # Policy 1: Protect API Pod
-# Allows access from NGINX, UT, and Analytics Web pods with mTLS
+# Allows access from NGINX, UT, and Analytics Web pods with SPIFFE mTLS
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -17,7 +17,7 @@ spec:
     matchLabels:
       app: ent-cloud-api
   ingress:
-    # Allow traffic from NGINX, UT, and Analytics Web pods (mTLS required)
+    # Allow traffic with SPIFFE mTLS
     - fromEndpoints:
         - matchLabels:
             app: nginx
@@ -33,16 +33,26 @@ spec:
         - matchLabels:
             app: ent-analytics-web
         {{- end }}
-      authentication:
-        mode: "required"
       toPorts:
         - ports:
             - port: "3333"
               protocol: TCP
-
+          terminatingTLS:
+            spiffe:
+              peerIDs:
+                - spiffe://{{ .Values.ciliumNetworkPolicy.trustDomain }}/ns/{{ .Release.Namespace }}/sa/nginx
+                {{- if and .Values.userTesting.enabled .Values.userTesting.useLegacy }}
+                - spiffe://{{ .Values.ciliumNetworkPolicy.trustDomain }}/ns/{{ .Release.Namespace }}/sa/ent-cloud-ut
+                {{- end }}
+                {{- if and .Values.userTesting.enabled (not .Values.userTesting.useLegacy) }}
+                - spiffe://{{ .Values.ciliumNetworkPolicy.trustDomain }}/ns/{{ .Release.Namespace }}/sa/user-testing-server
+                {{- end }}
+                {{- if .Values.analytics.enabled }}
+                - spiffe://{{ .Values.ciliumNetworkPolicy.trustDomain }}/ns/{{ .Release.Namespace }}/sa/ent-analytics-web
+                {{- end }}
     # Allow health checks from kubelet
     - fromEntities:
-        - "host"
+        - host
       toPorts:
         - ports:
             - port: "3333"
@@ -50,7 +60,7 @@ spec:
 
 ---
 # Policy 2: Protect Web Pod
-# Only allows access from NGINX pod with mTLS
+# Only allows access from NGINX pod with SPIFFE mTLS
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -61,20 +71,21 @@ spec:
     matchLabels:
       app: ent-cloud-web
   ingress:
-    # Allow traffic from NGINX pod only (mTLS required)
+    # Allow traffic from NGINX pod with SPIFFE mTLS
     - fromEndpoints:
         - matchLabels:
             app: nginx
-      authentication:
-        mode: "required"
       toPorts:
         - ports:
             - port: "3000"
               protocol: TCP
-
+          terminatingTLS:
+            spiffe:
+              peerIDs:
+                - spiffe://{{ .Values.ciliumNetworkPolicy.trustDomain }}/ns/{{ .Release.Namespace }}/sa/nginx
     # Allow health checks from kubelet
     - fromEntities:
-        - "host"
+        - host
       toPorts:
         - ports:
             - port: "3000"
@@ -82,7 +93,7 @@ spec:
 
 ---
 # Policy 3: Protect Database Pod (Main Cloud DB)
-# Allows access from API and Analytics API pods with mTLS (most critical!)
+# Allows access from API and Analytics API pods with SPIFFE mTLS
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -93,7 +104,7 @@ spec:
     matchLabels:
       app: db
   ingress:
-    # Allow API, User Testing, and Analytics API pods to access DB (mTLS required)
+    # Allow traffic with SPIFFE mTLS
     - fromEndpoints:
         - matchLabels:
             app: ent-cloud-api
@@ -105,16 +116,23 @@ spec:
         - matchLabels:
             app: ent-analytics-api
         {{- end }}
-      authentication:
-        mode: "required"
       toPorts:
         - ports:
             - port: "5432"
               protocol: TCP
-
+          terminatingTLS:
+            spiffe:
+              peerIDs:
+                - spiffe://{{ .Values.ciliumNetworkPolicy.trustDomain }}/ns/{{ .Release.Namespace }}/sa/ent-cloud-api
+                {{- if and .Values.userTesting.enabled .Values.userTesting.useLegacy }}
+                - spiffe://{{ .Values.ciliumNetworkPolicy.trustDomain }}/ns/{{ .Release.Namespace }}/sa/ent-cloud-ut
+                {{- end }}
+                {{- if .Values.analytics.enabled }}
+                - spiffe://{{ .Values.ciliumNetworkPolicy.trustDomain }}/ns/{{ .Release.Namespace }}/sa/ent-analytics-api
+                {{- end }}
     # Allow health checks from kubelet
     - fromEntities:
-        - "host"
+        - host
       toPorts:
         - ports:
             - port: "5432"
@@ -123,8 +141,7 @@ spec:
 {{- if and .Values.userTesting.enabled .Values.userTesting.useLegacy }}
 ---
 # Policy 4a: Protect Legacy User Testing Pod (ent-cloud-ut)
-# Only allows access from NGINX pod with mTLS
-# Supports WebSocket connections on port 8081
+# Only allows access from NGINX pod with SPIFFE mTLS
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -135,25 +152,23 @@ spec:
     matchLabels:
       app: ent-cloud-ut
   ingress:
-    # Allow HTTP and WebSocket traffic from NGINX pod only (mTLS required)
+    # Allow traffic from NGINX pod with SPIFFE mTLS
     - fromEndpoints:
         - matchLabels:
             app: nginx
-      authentication:
-        mode: "required"
       toPorts:
-        # HTTP API (service port 80 → pod port 4444)
         - ports:
             - port: "4444"
               protocol: TCP
-        # WebSocket (service port 8081 → pod port 4445)
-        - ports:
             - port: "4445"
               protocol: TCP
-
+          terminatingTLS:
+            spiffe:
+              peerIDs:
+                - spiffe://{{ .Values.ciliumNetworkPolicy.trustDomain }}/ns/{{ .Release.Namespace }}/sa/nginx
     # Allow health checks from kubelet
     - fromEntities:
-        - "host"
+        - host
       toPorts:
         - ports:
             - port: "4444"
@@ -165,8 +180,7 @@ spec:
 {{- if and .Values.userTesting.enabled (not .Values.userTesting.useLegacy) }}
 ---
 # Policy 4b: Protect User Testing Server (new NestJS version)
-# Only allows access from NGINX pod with mTLS
-# Port 3030 for REST API and WebSocket (Socket.IO)
+# Only allows access from NGINX pod with SPIFFE mTLS
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -177,16 +191,18 @@ spec:
     matchLabels:
       app: user-testing-server
   ingress:
-    # Allow HTTP and WebSocket traffic from NGINX pod only (mTLS required)
+    # Allow traffic from NGINX pod with SPIFFE mTLS
     - fromEndpoints:
         - matchLabels:
             app: nginx
-      authentication:
-        mode: "required"
       toPorts:
         - ports:
             - port: "3030"
               protocol: TCP
+          terminatingTLS:
+            spiffe:
+              peerIDs:
+                - spiffe://{{ .Values.ciliumNetworkPolicy.trustDomain }}/ns/{{ .Release.Namespace }}/sa/nginx
     # Allow health checks from kubelet
     - fromEntities:
         - host
@@ -197,7 +213,7 @@ spec:
 
 ---
 # Policy 4c: Protect User Testing Database
-# Only allows access from user-testing-server with mTLS
+# Only allows access from user-testing-server with SPIFFE mTLS
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -208,16 +224,18 @@ spec:
     matchLabels:
       app: user-testing-db
   ingress:
-    # Allow traffic from user-testing-server only (mTLS required)
+    # Allow traffic from user-testing-server with SPIFFE mTLS
     - fromEndpoints:
         - matchLabels:
             app: user-testing-server
-      authentication:
-        mode: "required"
       toPorts:
         - ports:
             - port: "5432"
               protocol: TCP
+          terminatingTLS:
+            spiffe:
+              peerIDs:
+                - spiffe://{{ .Values.ciliumNetworkPolicy.trustDomain }}/ns/{{ .Release.Namespace }}/sa/user-testing-server
     # Allow health checks from kubelet
     - fromEntities:
         - host
@@ -228,7 +246,7 @@ spec:
 
 ---
 # Policy 4d: Protect User Testing Redis
-# Only allows access from user-testing-server with mTLS
+# Only allows access from user-testing-server with SPIFFE mTLS
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -239,16 +257,18 @@ spec:
     matchLabels:
       app: user-testing-redis
   ingress:
-    # Allow traffic from user-testing-server only (mTLS required)
+    # Allow traffic from user-testing-server with SPIFFE mTLS
     - fromEndpoints:
         - matchLabels:
             app: user-testing-server
-      authentication:
-        mode: "required"
       toPorts:
         - ports:
             - port: "6379"
               protocol: TCP
+          terminatingTLS:
+            spiffe:
+              peerIDs:
+                - spiffe://{{ .Values.ciliumNetworkPolicy.trustDomain }}/ns/{{ .Release.Namespace }}/sa/user-testing-server
     # Allow health checks from kubelet
     - fromEntities:
         - host
@@ -261,7 +281,7 @@ spec:
 {{- if .Values.analytics.enabled }}
 ---
 # Policy 5: Protect Analytics Web Pod
-# Only allows access from NGINX pod with mTLS
+# Only allows access from NGINX pod with SPIFFE mTLS
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -272,20 +292,21 @@ spec:
     matchLabels:
       app: ent-analytics-web
   ingress:
-    # Allow traffic from NGINX pod only (mTLS required)
+    # Allow traffic from NGINX pod with SPIFFE mTLS
     - fromEndpoints:
         - matchLabels:
             app: nginx
-      authentication:
-        mode: "required"
       toPorts:
         - ports:
             - port: "8050"
               protocol: TCP
-
+          terminatingTLS:
+            spiffe:
+              peerIDs:
+                - spiffe://{{ .Values.ciliumNetworkPolicy.trustDomain }}/ns/{{ .Release.Namespace }}/sa/nginx
     # Allow health checks from kubelet
     - fromEntities:
-        - "host"
+        - host
       toPorts:
         - ports:
             - port: "8050"
@@ -293,7 +314,7 @@ spec:
 
 ---
 # Policy 6: Protect Analytics API Pod
-# Allows access from NGINX and Analytics Web pods with mTLS
+# Allows access from NGINX and Analytics Web pods with SPIFFE mTLS
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -304,22 +325,24 @@ spec:
     matchLabels:
       app: ent-analytics-api
   ingress:
-    # Allow traffic from NGINX and Analytics Web pods (mTLS required)
+    # Allow traffic with SPIFFE mTLS
     - fromEndpoints:
         - matchLabels:
             app: nginx
         - matchLabels:
             app: ent-analytics-web
-      authentication:
-        mode: "required"
       toPorts:
         - ports:
             - port: "8000"
               protocol: TCP
-
+          terminatingTLS:
+            spiffe:
+              peerIDs:
+                - spiffe://{{ .Values.ciliumNetworkPolicy.trustDomain }}/ns/{{ .Release.Namespace }}/sa/nginx
+                - spiffe://{{ .Values.ciliumNetworkPolicy.trustDomain }}/ns/{{ .Release.Namespace }}/sa/ent-analytics-web
     # Allow health checks from kubelet
     - fromEntities:
-        - "host"
+        - host
       toPorts:
         - ports:
             - port: "8000"
