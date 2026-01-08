@@ -253,6 +253,9 @@ db:
   volume: 20Gi
   # If left empty, the default storage class will be used
   storageClassName: ""
+  # Use an existing secret for database credentials instead of generating one
+  # The secret must contain: username, password, read-user, write-user, read-password, write-password
+  existingSecret: ""
   service:
     port: 5432
   env:

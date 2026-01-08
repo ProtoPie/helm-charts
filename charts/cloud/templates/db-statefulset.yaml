@@ -25,12 +25,12 @@ spec:
         - name: POSTGRESQL_USER
           valueFrom:
             secretKeyRef:
-              name: db-secret
+              name: {{ include "protopie.db.secretName" . }}
               key: username
         - name: POSTGRESQL_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: db-secret
+              name: {{ include "protopie.db.secretName" . }}
               key: password
         - name: DB_DATABASE
           valueFrom:
@@ -45,22 +45,22 @@ spec:
         - name: DB_READ_USER
           valueFrom:
             secretKeyRef:
-              name: db-secret
+              name: {{ include "protopie.db.secretName" . }}
               key: read-user
         - name: DB_WRITE_USER
           valueFrom:
             secretKeyRef:
-              name: db-secret
+              name: {{ include "protopie.db.secretName" . }}
               key: write-user
         - name: DB_READ_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: db-secret
+              name: {{ include "protopie.db.secretName" . }}
               key: read-password
         - name: DB_WRITE_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: db-secret
+              name: {{ include "protopie.db.secretName" . }}
               key: write-password
         {{- if .Values.db.extra.envs }}
         {{- toYaml .Values.db.extra.envs | nindent 8 }}

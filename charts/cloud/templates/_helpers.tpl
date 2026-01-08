@@ -71,6 +71,17 @@ Create imagePullSecrets
 {{- end }}
 
 {{/*
+Get the DB secret name - use existingSecret if provided, otherwise "db-secret"
+*/}}
+{{- define "protopie.db.secretName" -}}
+{{- if .Values.db.existingSecret }}
+{{- .Values.db.existingSecret }}
+{{- else }}
+{{- print "db-secret" }}
+{{- end }}
+{{- end }}
+
+{{/*
 Generate DB_WRITE_PASSWORD - use provided value or generate random
 */}}
 {{- define "protopie.db.writePassword" -}}

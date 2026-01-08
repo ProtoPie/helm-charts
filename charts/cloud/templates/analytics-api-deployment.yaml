@@ -48,12 +48,12 @@ spec:
         - name: DB_USER
           valueFrom:
             secretKeyRef:
-              name: db-secret
+              name: {{ include "protopie.db.secretName" . }}
               key: write-user
         - name: DB_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: db-secret
+              name: {{ include "protopie.db.secretName" . }}
               key: write-password
         - name: DJANGO_SECRET_KEY
           valueFrom:
