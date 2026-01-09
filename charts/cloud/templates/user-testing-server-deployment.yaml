@@ -146,6 +146,11 @@ spec:
                 secretKeyRef:
                   name: user-testing-app-secret
                   key: cloud-api-service-key
+            - name: INTERNAL_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: user-testing-app-secret
+                  key: cloud-api-service-key
             - name: USE_MOCK_CLOUD_API
               value: {{ .Values.userTesting.useMockCloudApi | quote }}
             - name: WEB_STATIC_ROOM_URL
@@ -157,6 +162,8 @@ spec:
             - name: ADMIN_PASSWORD
               value: admin123
             - name: ANALYSIS_STORE_ALIGNMENT
+              value: "true"
+            - name: ANALYSIS_STORE_ALL_PATH_RESULTS
               value: "true"
           livenessProbe:
             httpGet:

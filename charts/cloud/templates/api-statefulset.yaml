@@ -85,6 +85,8 @@ spec:
                 secretKeyRef:
                   name: user-testing-app-secret
                   key: cloud-api-service-key
+            - name: USER_TESTING_SERVICE_URL
+              value: "http://user-testing-server:3030"
             {{- end }}
             {{- with .Values.cloud.envs }}
               {{- toYaml . | nindent 12 }}
