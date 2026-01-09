@@ -34,7 +34,7 @@ spec:
             - "60"
             - "1000"
             - --loglevel
-            - "warning"
+            - "notice"
           livenessProbe:
             tcpSocket:
               port: redis

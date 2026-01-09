@@ -36,54 +36,40 @@ spec:
             - sh
             - -c
             - |
-              # Construct DATABASE_URL with password from environment
-              export DATABASE_URL="postgresql://{{ .Values.userTesting.db.user }}:${POSTGRES_PASSWORD}@user-testing-db:5432/{{ .Values.userTesting.db.database }}"
+              set -e
+              export DATABASE_URL="postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}"
 
-              echo "🔍 Database connection details:"
-              echo "  Host: user-testing-db"
-              echo "  Port: 5432"
-              echo "  User: {{ .Values.userTesting.db.user }}"
-              echo "  Database: {{ .Values.userTesting.db.database }}"
-              echo ""
-              echo "⏳ Waiting for database to be ready..."
-
-              # Wait for database to be ready (up to 5 minutes)
+              echo "Waiting for database (${DB_HOST}:${DB_PORT})..."
               MAX_RETRIES=60
               RETRY_COUNT=0
 
-              while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-                echo "Attempt $((RETRY_COUNT + 1))/$MAX_RETRIES: Testing database connection..."
-
-                # Show detailed error on failure
-                if echo "SELECT 1" | npx prisma db execute --stdin 2>&1; then
-                  echo "✅ Database is ready!"
-                  break
-                else
-                  ERROR_OUTPUT=$?
-                  echo "❌ Connection failed with exit code: $ERROR_OUTPUT"
-                fi
-
+              until echo "SELECT 1" | npx prisma db execute --stdin >/dev/null 2>&1; do
                 RETRY_COUNT=$((RETRY_COUNT + 1))
-
-                if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
-                  echo "❌ Database not ready after $MAX_RETRIES attempts"
-                  echo "Last error output shown above"
+                if [ $RETRY_COUNT -ge $MAX_RETRIES ]; then
+                  echo "Database not ready after $MAX_RETRIES attempts"
                   exit 1
                 fi
-
-                echo "Database not ready yet, waiting 5 seconds..."
+                echo "Attempt $RETRY_COUNT/$MAX_RETRIES - retrying in 5s..."
                 sleep 5
               done
 
-              echo "🚀 Running Prisma migrations..."
+              echo "Database ready. Running migrations..."
               npx prisma migrate deploy
-              echo "✅ Migrations completed successfully"
+              echo "Migrations completed"
           env:
-            - name: POSTGRES_PASSWORD
+            - name: DB_HOST
+              value: {{ .Values.userTesting.db.host | default "user-testing-db" | quote }}
+            - name: DB_PORT
+              value: {{ .Values.userTesting.db.port | default "5432" | quote }}
+            - name: DB_USER
+              value: {{ .Values.userTesting.db.user | quote }}
+            - name: DB_NAME
+              value: {{ .Values.userTesting.db.database | quote }}
+            - name: DB_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: user-testing-db-secret
-                  key: password
+                  name: {{ .Values.userTesting.db.existingSecret | default "user-testing-db-secret" }}
+                  key: {{ .Values.userTesting.db.secretKeys.password | default "password" }}
           resources:
             limits:
               cpu: 500m
@@ -99,9 +85,7 @@ spec:
             - sh
             - -c
             - |
-              # Construct DATABASE_URL with password from environment
-              export DATABASE_URL="postgresql://{{ .Values.userTesting.db.user }}:${POSTGRES_PASSWORD}@user-testing-db:5432/{{ .Values.userTesting.db.database }}"
-              # Start the application
+              export DATABASE_URL="postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}"
               exec node dist/src/main.js
           ports:
             - name: http
@@ -114,11 +98,19 @@ spec:
               value: "3030"
             - name: LOG_LEVEL
               value: {{ .Values.userTesting.logLevel | quote }}
-            - name: POSTGRES_PASSWORD
+            - name: DB_HOST
+              value: {{ .Values.userTesting.db.host | default "user-testing-db" | quote }}
+            - name: DB_PORT
+              value: {{ .Values.userTesting.db.port | default "5432" | quote }}
+            - name: DB_USER
+              value: {{ .Values.userTesting.db.user | quote }}
+            - name: DB_NAME
+              value: {{ .Values.userTesting.db.database | quote }}
+            - name: DB_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: user-testing-db-secret
-                  key: password
+                  name: {{ .Values.userTesting.db.existingSecret | default "user-testing-db-secret" }}
+                  key: {{ .Values.userTesting.db.secretKeys.password | default "password" }}
             - name: REDIS_HOST
               value: "user-testing-redis"
             - name: REDIS_PORT
