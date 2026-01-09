@@ -101,10 +101,16 @@ userTesting:
 
   # PostgreSQL Database configuration
   db:
+    host: "user-testing-db"  # Override for external database
+    port: "5432"
     user: "user_testing"
     database: "user_testing"
     password: "local-dev-password-change-in-prod" # REQUIRED: Set in per-environment values (e.g., values-f1.yaml)
     postgresPassword: "local-dev-postgres-password-change-in-prod" # REQUIRED: Set in per-environment values
+    # Use existing secret instead of creating one (for external secrets management)
+    existingSecret: ""  # e.g., "my-db-secret"
+    secretKeys:
+      password: "password"  # Key name in the secret for db password
     storage: "10Gi"
     storageClassName: ""
     # Change this value to force fresh EFS storage (e.g., "v1" → "v2")
