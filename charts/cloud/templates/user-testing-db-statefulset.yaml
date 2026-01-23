@@ -70,16 +70,6 @@ spec:
         - name: postgresql
           image: "{{ .Values.image.cloud.userTestingDb.repository }}:{{ .Values.image.cloud.userTestingDb.tag }}"
           imagePullPolicy: {{ .Values.image.cloud.userTestingDb.pullPolicy }}
-          # Container Security Context - run as non-root user 1001
-          securityContext:
-            runAsUser: 1001
-            runAsGroup: 1001
-            runAsNonRoot: true
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop: ["ALL"]
-            seccompProfile:
-              type: RuntimeDefault
           ports:
             - name: postgresql
               containerPort: 5432
