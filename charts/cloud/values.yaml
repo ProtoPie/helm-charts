@@ -117,6 +117,20 @@ userTesting:
     # Useful for recovering from corruption without deleting EFS data
     storageVersion: "v1"
 
+    # Volume permissions init container configuration
+    # Enable this for EFS or storage classes that don't support fsGroup ownership changes
+    # Bitnami PostgreSQL runs as UID 1001, this init container fixes volume ownership
+    # Uses the same PostgreSQL image as the main container (no extra image pull)
+    volumePermissions:
+      enabled: true
+      resources:
+        limits:
+          cpu: 100m
+          memory: 128Mi
+        requests:
+          cpu: 50m
+          memory: 64Mi
+
     resources:
       requests:
         cpu: "500m"

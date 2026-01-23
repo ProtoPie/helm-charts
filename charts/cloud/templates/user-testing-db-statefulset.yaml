@@ -21,10 +21,65 @@ spec:
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      # Pod Security Context - sets fsGroup for volume ownership
+      securityContext:
+        fsGroup: 1001
+        # OnRootMismatch only changes ownership if root directory has wrong permissions
+        # This avoids expensive recursive chown on every pod start for existing data
+        fsGroupChangePolicy: OnRootMismatch
+      {{- if .Values.userTesting.db.volumePermissions.enabled }}
+      # Init container to fix volume permissions (needed for EFS/certain storage classes)
+      initContainers:
+        - name: volume-permissions
+          image: "{{ .Values.image.cloud.userTestingDb.repository }}:{{ .Values.image.cloud.userTestingDb.tag }}"
+          imagePullPolicy: {{ .Values.image.cloud.userTestingDb.pullPolicy }}
+          command:
+            - /bin/bash
+            - -ec
+            - |
+              # Fix ownership of the data directory only if needed (avoids slow chown on large datasets)
+              DATA_DIR="/bitnami/postgresql/data"
+              TARGET_OWNER="1001:1001"
+
+              if [ ! -d "$DATA_DIR" ]; then
+                echo "Creating data directory..."
+                mkdir -p "$DATA_DIR"
+                chown "$TARGET_OWNER" "$DATA_DIR"
+                chmod 700 "$DATA_DIR"
+              elif [ "$(stat -c '%u:%g' "$DATA_DIR")" != "$TARGET_OWNER" ]; then
+                echo "Fixing ownership of data directory..."
+                chown -R "$TARGET_OWNER" "$DATA_DIR"
+                chmod 700 "$DATA_DIR"
+              else
+                echo "Data directory ownership is correct, skipping chown"
+              fi
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+            runAsNonRoot: false
+            seccompProfile:
+              type: RuntimeDefault
+          volumeMounts:
+            - name: data
+              mountPath: /bitnami/postgresql/data
+              subPath: {{ .Values.userTesting.db.storageVersion | quote }}
+          resources:
+            {{- toYaml .Values.userTesting.db.volumePermissions.resources | nindent 12 }}
+      {{- end }}
       containers:
         - name: postgresql
           image: "{{ .Values.image.cloud.userTestingDb.repository }}:{{ .Values.image.cloud.userTestingDb.tag }}"
           imagePullPolicy: {{ .Values.image.cloud.userTestingDb.pullPolicy }}
+          # Container Security Context - run as non-root user 1001
+          securityContext:
+            runAsUser: 1001
+            runAsGroup: 1001
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            seccompProfile:
+              type: RuntimeDefault
           ports:
             - name: postgresql
               containerPort: 5432
