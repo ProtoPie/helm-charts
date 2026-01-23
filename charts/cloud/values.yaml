@@ -111,6 +111,7 @@ userTesting:
     existingSecret: ""  # e.g., "my-db-secret"
     secretKeys:
       password: "password"  # Key name in the secret for db password
+      postgresPassword: "postgres-password"  # Key name in the secret for postgres superuser password
     storage: "10Gi"
     storageClassName: ""
     # Change this value to force fresh EFS storage (e.g., "v1" → "v2")
@@ -194,6 +195,12 @@ userTesting:
 
   # Cloud-API Service Key for server-to-server authentication
   cloudApiServiceKey: "" # REQUIRED: Set in per-environment values (obtain from cloud-api team)
+
+  # Use existing secret instead of creating user-testing-app-secret (for external secrets management)
+  existingAppSecret: ""  # e.g., "user-testing-app-secret"
+  appSecretKeys:
+    jwtSecret: "jwt-secret"  # Key name in the secret for JWT secret
+    cloudApiServiceKey: "cloud-api-service-key"  # Key name in the secret for cloud API service key
 
 ciliumNetworkPolicy:
   enabled: false
