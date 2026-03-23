@@ -13,6 +13,6 @@ spec:
       command: ['wget']
       args:
         - '-qO-'
-        - 'nginx.{{ .Release.Namespace }}.svc.cluster.local'
-        - 'ent-cloud-api-svc.{{ .Release.Namespace }}.svc.cluster.local'
+        - 'nginx.{{ .Release.Namespace }}.svc.{{ include "protopie.clusterDomain" . }}'
+        - 'ent-cloud-api-svc.{{ .Release.Namespace }}.svc.{{ include "protopie.clusterDomain" . }}'
   restartPolicy: Never

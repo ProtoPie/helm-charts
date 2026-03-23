@@ -1,3 +1,4 @@
+clusterDomain: cluster.local
 nodeSelector: &nodeSelector {}
 podAnnotations:
   app: protopie
@@ -38,7 +39,8 @@ ingress:
   # If you want to use a specific ingress class, set the value here.
   ingressClassName: ""
   enabled: false
-  host: ""
+  hosts:
+  - protopie.local
   annotations: {}
   # To enable certificate, set the value to true.
   tls:
@@ -59,6 +61,7 @@ imagePullSecrets: null
 
 userTesting:
   enabled: false
+  resources: {}
 
 analytics:
   enabled: false
@@ -70,6 +73,7 @@ analytics:
       AE_API_USER_ID: "admin"
       # If left empty, a random password will be generated automatically
       AE_API_USER_PASS: ""
+    resources: {}
   api:
     env:
       ROOT_PATH: "/api/analytics/"
@@ -77,6 +81,7 @@ analytics:
       ALLOWED_HOSTS: "*"
       # If left empty, a random password will be generated automatically
       DJANGO_SECRET_KEY: ""
+    resources: {}
 
 cloud:
   host: ""
@@ -85,8 +90,10 @@ cloud:
     host: ""
   api:
     replicas: 1
+    resources: {}
   web:
     replicas: 1
+    resources: {}
   wellKnown:
     enabled: false
   volumes:
@@ -104,15 +111,18 @@ cloud:
     yml: "you can set content by --set-file cloud.config.yml=config.yml"
   license:
     pem: "you can set content by --set-file cloud.license.pem=license.pem"
-  # Europ/Berlin 5 AM - UTC 3 AM - 0 3 * * *
-  # America/NewYork 6 AM - UTC 10 AM - 0 10 * * *
-  # America/California 3 AM - UTC 10 AM - 0 10 * * *
-  # Asia/Mumbai 5 AM - UTC 11:30 PM - 30 11 * * *
-  # Asia/Seoul 5 AM - UTC 20 PM - 0 20 * * *
-  cleanUpSchedule: "* 20 * * *"
+  cleanup:
+    image: alpine/kubectl:1.34.2
+    schedule: "* 20 * * *"
+    # Europ/Berlin 5 AM - UTC 3 AM - 0 3 * * *
+    # America/NewYork 6 AM - UTC 10 AM - 0 10 * * *
+    # America/California 3 AM - UTC 10 AM - 0 10 * * *
+    # Asia/Mumbai 5 AM - UTC 11:30 PM - 30 11 * * *
+    # Asia/Seoul 5 AM - UTC 20 PM - 0 20 * * *
 
 nginx:
   replicas: 1
+  resources: {}
 
 db:
   volume: 20Gi

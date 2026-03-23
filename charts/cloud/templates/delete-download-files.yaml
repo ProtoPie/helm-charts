@@ -49,7 +49,7 @@ metadata:
   labels:
     {{- include "protopie.labels" . | nindent 4 }}
 spec:
-  schedule: {{ .Values.cloud.cleanUpSchedule | quote }}
+  schedule: {{ .Values.cloud.cleanup.schedule | quote }}
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 1
   failedJobsHistoryLimit: 1
@@ -62,8 +62,10 @@ spec:
           activeDeadlineSeconds: 300
           containers:
             - name: delete-download-files
-              image: bitnami/kubectl:1.28.2
+              image: {{ .Values.cloud.cleanup.image }}
               imagePullPolicy: IfNotPresent
+              resources:
+                {{- toYaml .Values.cloud.cleanup.resources | nindent 16 }}
               command:
                 - /bin/sh
                 - -c

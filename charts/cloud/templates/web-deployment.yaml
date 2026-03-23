@@ -25,5 +25,7 @@ spec:
         - name: ent-cloud-web
           image: "{{ .Values.image.cloud.web.repository }}:{{ .Values.image.cloud.web.tag }}"
           imagePullPolicy: {{ .Values.image.cloud.web.pullPolicy }}
+          resources:
+            {{- toYaml .Values.cloud.web.resources | nindent 12 }}
           ports:
             - containerPort: 3000
