@@ -31,7 +31,7 @@ spec:
           imagePullPolicy: {{ .Values.image.cloud.userTesting.pullPolicy }}
           env:
             - name: API_URL
-              value: "http://ent-cloud-api-svc.{{ .Release.Namespace }}.svc.cluster.local"
+              value: "http://ent-cloud-api-svc.{{ .Release.Namespace }}.svc.{{ include "protopie.clusterDomain" . }}"
             - name: HOST
               value: 0.0.0.0
             - name: SOCKETIO_HOST
@@ -45,12 +45,7 @@ spec:
             - name: logs
               mountPath: /app/logs
           resources:
-            requests:
-              cpu: "250m"
-              memory: "64Mi"
-            limits:
-              cpu: "1"
-              memory: "4Gi"
+            {{- toYaml .Values.userTesting.resources | nindent 16 }}
       volumes:
         - name: logs
           hostPath:
