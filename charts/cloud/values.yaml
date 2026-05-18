@@ -24,6 +24,7 @@ image:
       pullPolicy: IfNotPresent
       repository: 310455165573.dkr.ecr.us-west-2.amazonaws.com/postgresql
       tag: 16.6.0
+      flavor: bitnami  # bitnami | upstream
     userTestingRedis:
       pullPolicy: IfNotPresent
       repository: 310455165573.dkr.ecr.us-west-2.amazonaws.com/redis
@@ -36,6 +37,7 @@ image:
     pullPolicy: IfNotPresent
     repository: bitnami/postgresql
     tag: 14.15.0
+    flavor: bitnami  # bitnami | upstream
   analytics:
     web:
       pullPolicy: IfNotPresent
