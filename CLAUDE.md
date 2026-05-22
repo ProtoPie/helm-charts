@@ -6,11 +6,11 @@
 
 IMPORTANT: main에 머지하기 전에 반드시 `Chart.yaml`의 `version`을 올려야 한다. GitHub Actions의 `chart-releaser-action`은 기존 릴리스와 버전이 다를 때만 새 릴리스를 생성한다. 버전을 안 올리면 변경사항이 `https://protopie.github.io/helm-charts`에 배포되지 않고 조용히 무시된다.
 
-## 패스워드 자동 생성 함정
+## 패스워드 자동 생성 함정 (DB init script는 해결됨)
 
-IMPORTANT: `db.env.DB_WRITE_PASSWORD`나 `db.env.DB_READ_PASSWORD`가 비어있으면(기본값), `_helpers.tpl`이 매 템플릿 렌더링마다 `randAlphaNum`으로 랜덤 패스워드를 생성한다. `{{ include }}` 호출마다 서로 다른 값이 나오기 때문에 `db-secret.yaml`과 `db-configmap.yaml` init 스크립트의 패스워드가 **같은 릴리스 안에서도 불일치**한다. `helm upgrade` 시에는 이전 릴리스와도 달라진다.
+**DB init script 부분은 `internal` 브랜치 v3.2.2에서 해결되었다.** `db-configmap.yaml`의 `01-init.sh`가 `randAlphaNum` 헬퍼 대신 컨테이너 환경변수(`$DB_READ_PASSWORD`, `$DB_WRITE_PASSWORD`)를 직접 참조하도록 변경되었다. 환경변수는 statefulset이 `db-secret` (ExternalSecret이 SSM에서 동기화)에서 `secretKeyRef`로 주입하므로, SSM 값이 실제 DB user 생성에 사용된다. ArgoCD의 `postgres-init-script-configmap` 영구 OutOfSync도 해소된다.
 
-첫 설치 전에 반드시 values 파일이나 `--set`으로 지정할 것:
+**여전히 주의가 필요한 항목**: `db-secret.yaml`은 `db.existingSecret`을 지정하지 않은 경우(자체 생성 시)에도 `_helpers.tpl`의 `randAlphaNum`을 사용한다. staging-eks의 -ee 환경은 `db.existingSecret: db-secret`으로 ExternalSecret을 사용하므로 `db-secret.yaml`이 렌더링되지 않아 문제없다. 그러나 ExternalSecret 없이 직접 설치하는 경우(enterprise 온프레미스 등)에는 여전히 아래 값을 지정해야 한다:
 - `db.env.DB_WRITE_PASSWORD`, `db.env.DB_READ_PASSWORD`
 - `analytics.web.env.AE_API_USER_PASS`, `analytics.api.env.DJANGO_SECRET_KEY` (analytics 사용 시)
 
@@ -25,7 +25,7 @@ IMPORTANT: `db.env.DB_WRITE_PASSWORD`나 `db.env.DB_READ_PASSWORD`가 비어있�
 ## 찾기 어려운 파일 위치
 
 - **Nginx 라우팅**: `templates/nginx-deployment.yaml` 하나에 nginx.conf와 virtualhost.conf가 인라인으로 들어있다 (ConfigMap 2개 + Deployment 1개, 총 3개 YAML 문서). 라우팅 변경은 여기서 한다.
-- **DB 초기화 스크립트**: `templates/db-configmap.yaml`에 사용자/데이터베이스 생성 SQL이 있다 (`db-secret.yaml`과 동일한 패스워드 헬퍼를 렌더링)
+- **DB 초기화 스크립트**: `templates/db-configmap.yaml`에 사용자/데이터베이스 생성 SQL이 있다. `internal` v3.2.2부터 패스워드는 `randAlphaNum` 헬퍼 대신 컨테이너 환경변수(`$DB_READ_PASSWORD`, `$DB_WRITE_PASSWORD`)를 참조한다
 - **패스워드 생성 로직**: `templates/_helpers.tpl` 76-115라인 (독립적인 `randAlphaNum` 생성기 4개)
 
 ## Feature 토글
