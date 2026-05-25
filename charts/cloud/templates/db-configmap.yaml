@@ -32,6 +32,11 @@ data:
     psql -v ON_ERROR_STOP=1 --username "{{ .Values.db.env.POSTGRES_USER }}" --dbname "{{ .Values.db.env.DB_DATABASE }}" <<-EOSQL
       CREATE EXTENSION IF NOT EXISTS pgcrypto;
       CREATE EXTENSION IF NOT EXISTS pg_trgm;
+      -- PostgreSQL 15+ revokes default CREATE on schema public for non-superusers.
+      -- Without these GRANTs, the application user gets "permission denied for
+      -- schema public" the first time it tries to create a migration table.
+      GRANT USAGE, CREATE ON SCHEMA public TO {{ .Values.db.env.DB_WRITE_USER }};
+      GRANT USAGE ON SCHEMA public TO {{ .Values.db.env.DB_READ_USER }};
       ALTER DEFAULT PRIVILEGES FOR ROLE {{ .Values.db.env.DB_WRITE_USER }} IN SCHEMA public GRANT SELECT ON TABLES TO {{ .Values.db.env.DB_READ_USER }};
     EOSQL
 
