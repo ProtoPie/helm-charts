@@ -14,10 +14,7 @@ spec:
       labels:
         app: ent-analytics-web
     spec:
-      {{- with .Values.nodeSelector }}
-      nodeSelector:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
+      {{- include "cloud.computeScheduling" . | nindent 6 }}
       {{- if .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- .Values.imagePullSecrets | toYaml | nindent 8 }}

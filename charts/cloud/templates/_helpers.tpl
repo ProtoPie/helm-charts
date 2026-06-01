@@ -124,3 +124,24 @@ Generate Analytics DJANGO_SECRET_KEY - use provided value or generate random
 {{- randAlphaNum 50 }}
 {{- end }}
 {{- end }}
+
+{{/*
+Compute-tier scheduling (nodeSelector / affinity / tolerations) for stateless
+workloads. Reads .Values.compute.* and falls back to the top-level values when
+unset, so existing consumers are unaffected. DB/stateful workloads keep using the
+top-level .Values.nodeSelector directly and are NOT steered by this helper.
+*/}}
+{{- define "cloud.computeScheduling" -}}
+{{- with (.Values.compute.nodeSelector | default .Values.nodeSelector) }}
+nodeSelector:
+  {{- toYaml . | nindent 2 }}
+{{- end }}
+{{- with (.Values.compute.affinity | default .Values.affinity) }}
+affinity:
+  {{- toYaml . | nindent 2 }}
+{{- end }}
+{{- with (.Values.compute.tolerations | default .Values.tolerations) }}
+tolerations:
+  {{- toYaml . | nindent 2 }}
+{{- end }}
+{{- end -}}
