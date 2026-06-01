@@ -16,10 +16,7 @@ spec:
       labels:
         app: user-testing-redis
     spec:
-      {{- with .Values.nodeSelector }}
-      nodeSelector:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
+      {{- include "cloud.computeScheduling" . | nindent 6 }}
       containers:
         - name: redis
           image: "{{ .Values.image.cloud.userTestingRedis.repository }}:{{ .Values.image.cloud.userTestingRedis.tag }}"

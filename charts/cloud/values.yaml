@@ -1,4 +1,18 @@
 nodeSelector: &nodeSelector {}
+# Top-level affinity / tolerations (applied where referenced).
+affinity: {}
+tolerations: []
+
+# Compute-tier scheduling for stateless workloads (api, web, nginx, user-testing,
+# analytics). Falls back to the top-level nodeSelector/affinity/tolerations when
+# unset, so existing consumers are unaffected. Stateful DB workloads are NOT
+# steered by this and keep using the top-level nodeSelector, so they stay on
+# default (on-demand) capacity unless the top-level nodeSelector is set.
+compute:
+  nodeSelector: {}
+  affinity: {}
+  tolerations: []
+
 podAnnotations:
   app: protopie
 

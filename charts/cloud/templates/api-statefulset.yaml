@@ -114,18 +114,7 @@ spec:
               mountPath: /app/default
             - name: config
               mountPath: /app/resources
-      {{- with .Values.nodeSelector }}
-      nodeSelector:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with .Values.affinity }}
-      affinity:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with .Values.tolerations }}
-      tolerations:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
+      {{- include "cloud.computeScheduling" . | nindent 6 }}
       volumes:
         {{- if .Values.cloud.volumes.usePVC }}
         - name: logs
