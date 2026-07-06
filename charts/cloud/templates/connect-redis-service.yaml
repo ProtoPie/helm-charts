@@ -1,0 +1,18 @@
+{{- if .Values.connect.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: connect-redis
+  labels:
+    {{- include "protopie.labels" . | nindent 4 }}
+    app: connect-redis
+spec:
+  type: ClusterIP
+  ports:
+    - port: 6379
+      targetPort: redis
+      protocol: TCP
+      name: redis
+  selector:
+    app: connect-redis
+{{- end }}

@@ -1,0 +1,18 @@
+{{- if and .Values.connect.enabled .Values.connect.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: connect-data
+  labels:
+    {{- include "protopie.labels" . | nindent 4 }}
+    app: connect-server
+spec:
+  accessModes:
+    - {{ .Values.connect.persistence.accessMode | default "ReadWriteOnce" }}
+  resources:
+    requests:
+      storage: {{ .Values.connect.persistence.size | default "5Gi" }}
+  {{- with .Values.connect.persistence.storageClassName }}
+  storageClassName: {{ . }}
+  {{- end }}
+{{- end }}

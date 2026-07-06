@@ -1,0 +1,85 @@
+{{- if .Values.connect.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: connect-server
+  labels:
+    {{- include "protopie.labels" . | nindent 4 }}
+    app: connect-server
+spec:
+  replicas: {{ .Values.connect.replicas | default 1 }}
+  selector:
+    matchLabels:
+      app: connect-server
+  template:
+    metadata:
+      labels:
+        app: connect-server
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/connect-config-configmap.yaml") . | sha256sum }}
+        checksum/db-secret: {{ include (print $.Template.BasePath "/connect-db-secret.yaml") . | sha256sum }}
+        checksum/app-secret: {{ include (print $.Template.BasePath "/connect-app-secret.yaml") . | sha256sum }}
+    spec:
+      {{- include "cloud.computeScheduling" . | nindent 6 }}
+      {{- if .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- .Values.imagePullSecrets | toYaml | nindent 8 }}
+      {{- else if .Values.imageCredentials }}
+      imagePullSecrets:
+      - name: protopie-private-registry
+      {{- end }}
+      containers:
+        - name: connect-server
+          image: "{{ .Values.connect.server.image.repository }}:{{ .Values.connect.server.image.tag }}"
+          imagePullPolicy: {{ .Values.connect.server.image.pullPolicy | default "Always" }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.connect.server.port | default 3033 }}
+              protocol: TCP
+          env:
+            # Override the image default PPC_HOST_BIND=127.0.0.1 so the app binds
+            # all interfaces and the ClusterIP Service can route to the pod.
+            - name: PPC_HOST_BIND
+              value: {{ .Values.connect.server.hostBind | default "0.0.0.0" | quote }}
+            # The app rejects PPC_HOST_BIND=0.0.0.0 unless bind-all is explicitly
+            # allowed; in k8s the pod network is isolated so all-interfaces is
+            # required for the Service to reach it.
+            - name: PPC_ALLOW_BIND_ALL
+              value: {{ .Values.connect.server.allowBindAll | default "1" | quote }}
+          # Non-secret config from connect-config (ConfigMap) and secrets from
+          # connect-app-secret (inline, or SSM when externalSecrets.enabled=true).
+          envFrom:
+            - configMapRef:
+                name: connect-config
+            - secretRef:
+                name: connect-app-secret
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.connect.server.healthPath | default "/health" }}
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.connect.server.healthPath | default "/health" }}
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          resources:
+            {{- toYaml .Values.connect.server.resources | nindent 12 }}
+          {{- if .Values.connect.persistence.enabled }}
+          volumeMounts:
+            - name: data
+              mountPath: {{ .Values.connect.persistence.mountPath | default "/data" }}
+          {{- end }}
+      {{- if .Values.connect.persistence.enabled }}
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: connect-data
+      {{- end }}
+{{- end }}

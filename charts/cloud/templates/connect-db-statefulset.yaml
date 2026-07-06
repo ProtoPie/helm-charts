@@ -1,0 +1,142 @@
+{{- if .Values.connect.enabled }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: connect-db
+  labels:
+    {{- include "protopie.labels" . | nindent 4 }}
+    app: connect-db
+spec:
+  serviceName: connect-db
+  replicas: 1
+  selector:
+    matchLabels:
+      app: connect-db
+  template:
+    metadata:
+      labels:
+        app: connect-db
+    spec:
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      # Pod Security Context - sets fsGroup for volume ownership
+      securityContext:
+        fsGroup: 1001
+        # OnRootMismatch only changes ownership if root directory has wrong permissions
+        # This avoids expensive recursive chown on every pod start for existing data
+        fsGroupChangePolicy: OnRootMismatch
+      {{- if .Values.connect.db.volumePermissions.enabled }}
+      # Init container to fix volume permissions (needed for EFS/certain storage classes)
+      initContainers:
+        - name: volume-permissions
+          image: "{{ .Values.connect.db.image.repository }}:{{ .Values.connect.db.image.tag }}"
+          imagePullPolicy: {{ .Values.connect.db.image.pullPolicy | default "IfNotPresent" }}
+          command:
+            - /bin/bash
+            - -ec
+            - |
+              # Fix ownership of the data directory only if needed (avoids slow chown on large datasets)
+              DATA_DIR="/bitnami/postgresql/data"
+              TARGET_OWNER="1001:1001"
+
+              if [ ! -d "$DATA_DIR" ]; then
+                echo "Creating data directory..."
+                mkdir -p "$DATA_DIR"
+                chown "$TARGET_OWNER" "$DATA_DIR"
+                chmod 700 "$DATA_DIR"
+              elif [ "$(stat -c '%u:%g' "$DATA_DIR")" != "$TARGET_OWNER" ]; then
+                echo "Fixing ownership of data directory..."
+                chown -R "$TARGET_OWNER" "$DATA_DIR"
+                chmod 700 "$DATA_DIR"
+              else
+                echo "Data directory ownership is correct, skipping chown"
+              fi
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+            runAsNonRoot: false
+            seccompProfile:
+              type: RuntimeDefault
+          volumeMounts:
+            - name: data
+              mountPath: /bitnami/postgresql/data
+              subPath: {{ .Values.connect.db.storageVersion | default "v1" | quote }}
+          resources:
+            {{- toYaml .Values.connect.db.volumePermissions.resources | nindent 12 }}
+      {{- end }}
+      containers:
+        - name: postgresql
+          image: "{{ .Values.connect.db.image.repository }}:{{ .Values.connect.db.image.tag }}"
+          imagePullPolicy: {{ .Values.connect.db.image.pullPolicy | default "IfNotPresent" }}
+          ports:
+            - name: postgresql
+              containerPort: 5432
+              protocol: TCP
+          env:
+            - name: POSTGRESQL_USERNAME
+              value: {{ .Values.connect.db.user | quote }}
+            - name: POSTGRESQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: connect-db-secret
+                  key: password
+            - name: POSTGRESQL_DATABASE
+              value: {{ .Values.connect.db.database | quote }}
+            - name: POSTGRESQL_POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: connect-db-secret
+                  key: postgres-password
+            - name: POSTGRESQL_ENABLE_LDAP
+              value: "no"
+            - name: POSTGRESQL_ENABLE_TLS
+              value: "no"
+            - name: POSTGRESQL_LOG_HOSTNAME
+              value: "false"
+            - name: POSTGRESQL_LOG_CONNECTIONS
+              value: "false"
+            - name: POSTGRESQL_LOG_DISCONNECTIONS
+              value: "false"
+          # StartupProbe: EFS initialization takes 10-15 minutes (vs 30 seconds on EBS)
+          # CREATE DATABASE copies template files over network, which is very slow
+          startupProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - pg_isready -U postgres
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 60  # 60 attempts * 10s = 10 minutes max startup time
+          resources:
+            {{- toYaml .Values.connect.db.resources | nindent 12 }}
+          volumeMounts:
+            - name: data
+              mountPath: /bitnami/postgresql/data
+              subPath: {{ .Values.connect.db.storageVersion | default "v1" | quote }}
+            - name: postgres-config
+              mountPath: /bitnami/postgresql/conf/conf.d
+              readOnly: true
+      volumes:
+        - name: postgres-config
+          configMap:
+            name: connect-db-config
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+        labels:
+          app: connect-db
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: {{ .Values.connect.db.storage | default "10Gi" }}
+        {{- with .Values.connect.db.storageClassName }}
+        storageClassName: {{ . }}
+        {{- end }}
+{{- end }}

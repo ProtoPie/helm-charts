@@ -1,0 +1,18 @@
+{{- if .Values.connect.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: connect-server
+  labels:
+    {{- include "protopie.labels" . | nindent 4 }}
+    app: connect-server
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .Values.connect.server.port | default 3033 }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app: connect-server
+{{- end }}

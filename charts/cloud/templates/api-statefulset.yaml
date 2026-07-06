@@ -34,6 +34,19 @@ spec:
           image: "{{ .Values.image.cloud.api.repository }}:{{ .Values.image.cloud.api.tag }}"
           imagePullPolicy: {{ .Values.image.cloud.api.pullPolicy }}
           env:
+            {{- if .Values.connect.enabled }}
+            # cloud-api /connect-cloud/* server-to-server auth key. Re-references
+            # the same connect-app-secret key connect-server reads as
+            # PPC_CLOUD_SERVICE_KEY, so the two values always match (one SSM
+            # param). optional: if the key isn't provisioned cloud-api still
+            # boots and only the connect endpoints fail closed.
+            - name: CONNECT_SERVICE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: connect-app-secret
+                  key: PPC_CLOUD_SERVICE_KEY
+                  optional: true
+            {{- end }}
             - name: DB_HOST
               valueFrom:
                 configMapKeyRef:

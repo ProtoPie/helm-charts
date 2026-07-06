@@ -64,6 +64,13 @@ data:
       server ent-cloud-api-svc.{{ .Release.Namespace }}.svc.cluster.local;
     }
 
+    {{- if .Values.connect.enabled }}
+    # Connect on Cloud server
+    upstream connect_cloud_server {
+      server connect-server.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.connect.server.port | default 3033 }};
+    }
+    {{- end }}
+
     {{- if .Values.analytics.enabled }}
     upstream analytics-web_server {
       server ent-analytics-web-svc.{{ .Release.Namespace }}.svc.cluster.local;
@@ -195,6 +202,43 @@ data:
         }
         {{- end }}
 
+        {{- if .Values.connect.enabled }}
+        # connect-cloud-server: WebSocket
+        location ^~ /api/connect/socket.io/ {
+            proxy_pass http://connect_cloud_server/socket.io/;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection $connection_upgrade;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_read_timeout 86400s;
+            proxy_send_timeout 86400s;
+        }
+
+        # connect-cloud-server: HTTP API
+        location ^~ /api/connect/ {
+            proxy_pass http://connect_cloud_server/;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_set_header X-Forwarded-Prefix /api/connect;
+        }
+
+        # connect-cloud-server: Web UI (Next.js basePath = /connect).
+        # No trailing slash + proxy_pass without URI → original path passed as-is,
+        # so /connect and /connect/... both hit connect (avoids 301/308 loop).
+        location ^~ /connect {
+            proxy_pass http://connect_cloud_server;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+        {{- end }}
+
         {{- if .Values.analytics.enabled }}
         # analytics dashboard
         location /analytics {
@@ -297,7 +341,7 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/nginx-conf: {{ printf "%s%s%s%s%s" (.Values.cloud.host | toString) (.Values.cloud.api.featureFlag | toString) (.Values.userTesting | toYaml) (.Values.analytics | toYaml) (.Values.cloud.share | toYaml) | sha256sum }}
+        checksum/nginx-conf: {{ printf "%s%s%s%s%s%s" (.Values.cloud.host | toString) (.Values.cloud.api.featureFlag | toString) (.Values.userTesting | toYaml) (.Values.analytics | toYaml) (.Values.cloud.share | toYaml) (.Values.connect | toYaml) | sha256sum }}
       labels:
         app: nginx
     spec:

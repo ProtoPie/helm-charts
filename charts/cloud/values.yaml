@@ -347,3 +347,107 @@ postgresql:
       size: 20G
     persistentVolumeClaimRetentionPolicy:
       enabled: true
+
+# Connect on Cloud (CoC) — optional connect-server + dedicated redis/postgres,
+# mirrored from the enterprise-eks protopie chart. When enabled, nginx routes
+# /connect (web UI), /api/connect/ (HTTP API) and /api/connect/socket.io/
+# (WebSocket) to connect-server, and cloud-api gets CONNECT_SERVICE_KEY wired
+# from connect-app-secret.
+connect:
+  enabled: false
+  replicas: 1
+  server:
+    image:
+      pullPolicy: Always
+      repository: 310455165573.dkr.ecr.us-west-2.amazonaws.com/tc-connect-cloud
+      tag: ""
+    port: 3033
+    hostBind: "0.0.0.0"
+    allowBindAll: "1"
+    healthPath: "/health"
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "512Mi"
+      limits:
+        cpu: "1000m"
+        memory: "2Gi"
+  # Non-secret runtime config → connect-config ConfigMap (safe to keep in git).
+  env: {}
+  # Secret KEY list only (values come from SSM via ExternalSecret when
+  # externalSecrets.enabled=true, otherwise set inline — not recommended).
+  secretEnv: {}
+  externalSecrets:
+    enabled: false
+    refreshInterval: "1h"
+    secretStoreRef:
+      name: "aws-parameter-store"
+      kind: "ClusterSecretStore"
+    # Base SSM path for secretEnv/db keys, e.g. /staging-eks/f1-ee/connect.
+    # Required when enabled.
+    ssmPathPrefix: ""
+    # Per-key full SSM path overrides, e.g. PPC_CLOUD_JWT_SECRET must equal
+    # cloud-api's PP_SECRET → point it at the shared parameter.
+    sharedRefs: {}
+  persistence:
+    enabled: true
+    mountPath: "/data"
+    size: "5Gi"
+    accessMode: "ReadWriteOnce"
+    storageClassName: ""
+  redis:
+    image:
+      pullPolicy: IfNotPresent
+      repository: 310455165573.dkr.ecr.us-west-2.amazonaws.com/redis
+      tag: 8.6.3-alpine
+    resources:
+      requests:
+        cpu: "10m"
+        memory: "32Mi"
+      limits:
+        cpu: "200m"
+        memory: "128Mi"
+  db:
+    user: "connect"
+    database: "connect"
+    # Inline passwords are only used when externalSecrets.enabled=false and are
+    # required in that case (no random generation — see the password pitfall in
+    # CLAUDE.md).
+    password: ""
+    postgresPassword: ""
+    storage: "10Gi"
+    storageClassName: ""
+    storageVersion: "v1"
+    image:
+      pullPolicy: IfNotPresent
+      repository: 310455165573.dkr.ecr.us-west-2.amazonaws.com/postgresql
+      tag: 16.6.0-patched
+    resources:
+      requests:
+        cpu: "50m"
+        memory: "512Mi"
+      limits:
+        cpu: "1000m"
+        memory: "4Gi"
+    config:
+      maxConnections: "100"
+      sharedBuffers: "256MB"
+      effectiveCacheSize: "1GB"
+      maintenanceWorkMem: "128MB"
+      checkpointCompletionTarget: "0.9"
+      walBuffers: "16MB"
+      defaultStatisticsTarget: "100"
+      randomPageCost: "1.1"
+      effectiveIoConcurrency: "200"
+      workMem: "16MB"
+      minWalSize: "1GB"
+      maxWalSize: "4GB"
+    volumePermissions:
+      enabled: true
+      resources:
+        limits:
+          cpu: "100m"
+          memory: "128Mi"
+        requests:
+          cpu: "50m"
+          memory: "64Mi"

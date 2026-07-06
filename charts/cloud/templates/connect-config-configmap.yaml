@@ -1,0 +1,15 @@
+{{- if .Values.connect.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: connect-config
+  labels:
+    {{- include "protopie.labels" . | nindent 4 }}
+    app: connect-server
+{{- with .Values.connect.env }}
+data:
+  {{- range $key, $value := . }}
+  {{ $key }}: {{ $value | quote }}
+  {{- end }}
+{{- end }}
+{{- end }}

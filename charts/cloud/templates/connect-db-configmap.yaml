@@ -1,0 +1,24 @@
+{{- if .Values.connect.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: connect-db-config
+  labels:
+    {{- include "protopie.labels" . | nindent 4 }}
+    app: connect-db
+data:
+  custom.conf: |
+    # PostgreSQL custom configuration for Connect
+    max_connections = {{ .Values.connect.db.config.maxConnections | default "100" }}
+    shared_buffers = {{ .Values.connect.db.config.sharedBuffers | default "256MB" }}
+    effective_cache_size = {{ .Values.connect.db.config.effectiveCacheSize | default "1GB" }}
+    maintenance_work_mem = {{ .Values.connect.db.config.maintenanceWorkMem | default "128MB" }}
+    checkpoint_completion_target = {{ .Values.connect.db.config.checkpointCompletionTarget | default "0.9" }}
+    wal_buffers = {{ .Values.connect.db.config.walBuffers | default "16MB" }}
+    default_statistics_target = {{ .Values.connect.db.config.defaultStatisticsTarget | default "100" }}
+    random_page_cost = {{ .Values.connect.db.config.randomPageCost | default "1.1" }}
+    effective_io_concurrency = {{ .Values.connect.db.config.effectiveIoConcurrency | default "200" }}
+    work_mem = {{ .Values.connect.db.config.workMem | default "16MB" }}
+    min_wal_size = {{ .Values.connect.db.config.minWalSize | default "1GB" }}
+    max_wal_size = {{ .Values.connect.db.config.maxWalSize | default "4GB" }}
+{{- end }}
