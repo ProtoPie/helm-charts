@@ -21,6 +21,12 @@ spec:
         checksum/app-secret: {{ include (print $.Template.BasePath "/connect-app-secret.yaml") . | sha256sum }}
     spec:
       {{- include "cloud.computeScheduling" . | nindent 6 }}
+      {{- with .Values.connect.server.podSecurityContext }}
+      # Fresh PVCs are root-owned while the image runs as uid 1000 (node), so
+      # mkdir under /data fails with EACCES unless fsGroup realigns the volume.
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       {{- if .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- .Values.imagePullSecrets | toYaml | nindent 8 }}

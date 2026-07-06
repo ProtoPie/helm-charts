@@ -365,6 +365,11 @@ connect:
     hostBind: "0.0.0.0"
     allowBindAll: "1"
     healthPath: "/health"
+    # The image runs as uid 1000 (node); fsGroup lets it write to the
+    # root-owned connect-data PVC.
+    podSecurityContext:
+      fsGroup: 1000
+      fsGroupChangePolicy: OnRootMismatch
     resources:
       requests:
         cpu: "100m"
