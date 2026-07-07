@@ -8,6 +8,10 @@ metadata:
     app: connect-server
 spec:
   replicas: {{ .Values.connect.replicas | default 1 }}
+  # connect-data PVC is RWO (EBS): RollingUpdate deadlocks on Multi-Attach —
+  # the new pod cannot attach the volume while the old pod still holds it.
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: connect-server
