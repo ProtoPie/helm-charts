@@ -1,0 +1,96 @@
+# Hourly Salesforce → DB account/opportunity mirror sync.
+#
+# Same api image, command overridden to the SF sync entrypoint
+# (apps/api/dist/salesforce-sync/sf-main.js) — no separate image. The manual
+# dashboard "Sync now" button runs the same syncSalesforce() in-process in the
+# API and is NOT gated; ENABLE_SF_SYNC below gates only this automated path,
+# which is why the gate lives HERE and not in honmoon-config (see honmoon
+# docs/runbooks/sf-sync-deployment.md §3).
+#
+# Least-privilege shape (honmoon PR #247 review, security hard-veto): NO envFrom
+# — the aggregate honmoon-secret carries CA signing keys, GitHub App keys, ArgoCD
+# tokens and Slack/Okta credentials this job has no business holding, so only
+# the DB + SF keys are injected individually. The PEM comes from the dedicated
+# honmoon-sf-key Secret as a FILE only, and the ServiceAccount is the
+# IRSA-less sf-sync-sa (no AWS permissions).
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: honmoon-sf-sync
+  namespace: {{ .Values.namespace }}
+spec:
+  schedule: {{ .Values.sfSync.schedule | quote }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 5
+  jobTemplate:
+    spec:
+      backoffLimit: 0 # app-level behavior is skip-and-log; no K8s-level retry storms
+      template:
+        spec:
+          restartPolicy: Never
+          {{- with .Values.nodeSelector }}
+          # Runs the honmoon-api image, which is arm64-only on dev — see
+          # api-deployment.yaml.
+          nodeSelector:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          serviceAccountName: sf-sync-sa # IRSA-less — sync needs no AWS access
+          securityContext:
+            fsGroup: 1001 # image runs as appuser(1001); without this the 0440 root-owned PEM is unreadable (EACCES every run)
+          containers:
+            - name: sf-sync
+              image: "{{ .Values.image.api.repository }}:{{ .Values.image.api.tag }}"
+              # api-latest is a MUTABLE tag (not ":latest", so the default
+              # policy is IfNotPresent) — without Always a node could keep
+              # running a stale cached image every hour. Matches the aws-cost
+              # CronJob precedent.
+              imagePullPolicy: {{ .Values.image.api.pullPolicy }}
+              command: ["sh", "-c"]
+              args:
+                - >
+                  export DATABASE_URL="postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT:-5432}/${DB_NAME}?schema=${DB_SCHEMA:-public}" &&
+                  node apps/api/dist/salesforce-sync/sf-main.js
+              env:
+                # DB connection — individual keys, never envFrom (see header).
+                - name: DB_HOST
+                  valueFrom: { secretKeyRef: { name: honmoon-secret, key: DB_HOST } }
+                - name: DB_PORT
+                  valueFrom: { secretKeyRef: { name: honmoon-secret, key: DB_PORT } }
+                - name: DB_USER
+                  valueFrom: { secretKeyRef: { name: honmoon-secret, key: DB_USER } }
+                - name: DB_PASSWORD
+                  valueFrom: { secretKeyRef: { name: honmoon-secret, key: DB_PASSWORD } }
+                - name: DB_NAME
+                  valueFrom: { secretKeyRef: { name: honmoon-secret, key: DB_NAME } }
+                - name: DB_SCHEMA
+                  valueFrom: { secretKeyRef: { name: honmoon-secret, key: DB_SCHEMA } }
+                # Salesforce Connected App (JWT Bearer) — auth trio; the RSA
+                # key arrives as a FILE below, never as an env value.
+                - name: SF_LOGIN_URL
+                  valueFrom: { secretKeyRef: { name: honmoon-secret, key: SF_LOGIN_URL } }
+                - name: SF_CONSUMER_KEY
+                  valueFrom: { secretKeyRef: { name: honmoon-secret, key: SF_CONSUMER_KEY } }
+                - name: SF_INTEGRATION_USERNAME
+                  valueFrom: { secretKeyRef: { name: honmoon-secret, key: SF_INTEGRATION_USERNAME } }
+                - name: SF_SA_KEY_FILE
+                  value: /etc/sf-sa/sf-sa-key.pem
+                # Gate must be explicitly on for the cron path — sf-main.ts
+                # logs and exits 0 without it. Deliberately set here, not in
+                # honmoon-config (runbook §3).
+                - name: ENABLE_SF_SYNC
+                  value: "true"
+              volumeMounts:
+                - name: sf-sa
+                  mountPath: /etc/sf-sa
+                  readOnly: true
+              resources:
+                {{- toYaml .Values.sfSync.resources | nindent 16 }}
+          volumes:
+            - name: sf-sa
+              secret:
+                secretName: honmoon-sf-key # dedicated PEM Secret — never in any envFrom
+                defaultMode: 288 # 0440 octal; readable via fsGroup 1001 above
+                items:
+                  - key: SF_SA_KEY_PEM
+                    path: sf-sa-key.pem

@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: honmoon-config
+  namespace: {{ .Values.namespace }}
+data:
+  {{- toYaml .Values.config | nindent 2 }}

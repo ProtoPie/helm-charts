@@ -1,0 +1,120 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: api
+    app.kubernetes.io/part-of: enterprise-license-admin
+spec:
+  replicas: {{ .Values.api.replicas }}
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+    spec:
+      {{- with .Values.nodeSelector }}
+      # The dev honmoon images are built linux/arm64 ONLY (honmoon
+      # .github/workflows/deploy-dev-app.yaml runs on a native arm64 runner —
+      # the previous QEMU multi-arch build took 10+ min cold). staging is a MIXED
+      # amd64 + arm64 fleet, so without this pin the scheduler can place the pod
+      # on an amd64 node and the container dies with `exec format error`.
+      # Drop this only together with restoring an amd64 image variant.
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: api-sa
+      # The api image runs as non-root appuser (uid/gid 1001). fsGroup makes the
+      # mounted secret volumes (CA + Google SA) group-owned by 1001 so 0440 files
+      # are readable by the process — without it, 0400 root-owned files give EACCES.
+      securityContext:
+        fsGroup: 1001
+      containers:
+        - name: api
+          image: "{{ .Values.image.api.repository }}:{{ .Values.image.api.tag }}"
+          imagePullPolicy: {{ .Values.image.api.pullPolicy }}
+          ports:
+            - containerPort: 3100
+          envFrom:
+            - configMapRef:
+                name: honmoon-config
+            - secretRef:
+                name: honmoon-secret
+          env:
+            # License-signing CA — mounted as files from honmoon-secret
+            # (PROTOPIE_CA_CERT/KEY synced from SSM). honmoon reads these PATHs;
+            # the signing key defaults to the CA key (same file).
+            - name: PROTOPIE_CA_CERT_PATH
+              value: /etc/protopie-ca/protopie.crt
+            - name: PROTOPIE_CA_KEY_PATH
+              value: /etc/protopie-ca/protopie.key
+            - name: PROTOPIE_SIGNING_KEY_PATH
+              value: /etc/protopie-ca/protopie.key
+            # Google Workspace SA key — mounted as a file from honmoon-secret
+            # (GOOGLE_SA_KEY_JSON synced from SSM). honmoon reads this PATH for the
+            # Account Manager directory lookup; GOOGLE_WORKSPACE_DOMAIN/ADMIN_EMAIL
+            # arrive via envFrom (honmoon-secret).
+            - name: GOOGLE_SA_KEY_FILE
+              value: /etc/google-sa/sa.json
+            # Salesforce Connected App RSA key — mounted as a file from
+            # honmoon-secret (SF_SA_KEY_PEM synced from SSM). honmoon reads
+            # this PATH at assertion-build time (readFileSync, not cached);
+            # SF_LOGIN_URL/SF_CONSUMER_KEY/SF_INTEGRATION_USERNAME arrive via
+            # envFrom (honmoon-secret).
+            - name: SF_SA_KEY_FILE
+              value: /etc/sf-sa/sf-sa-key.pem
+          resources:
+            {{- toYaml .Values.api.resources | nindent 12 }}
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 3100
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 3100
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          volumeMounts:
+            - name: protopie-ca
+              mountPath: /etc/protopie-ca
+              readOnly: true
+            - name: google-sa
+              mountPath: /etc/google-sa
+              readOnly: true
+            - name: sf-sa
+              mountPath: /etc/sf-sa
+              readOnly: true
+      volumes:
+        - name: protopie-ca
+          secret:
+            secretName: honmoon-secret
+            defaultMode: 288
+            items:
+              - key: PROTOPIE_CA_CERT
+                path: protopie.crt
+              - key: PROTOPIE_CA_KEY
+                path: protopie.key
+        - name: google-sa
+          secret:
+            secretName: honmoon-secret
+            defaultMode: 288
+            items:
+              - key: GOOGLE_SA_KEY_JSON
+                path: sa.json
+        - name: sf-sa
+          secret:
+            secretName: honmoon-sf-key
+            # Runbook (sf-sync-deployment.md §2) asks for 0400 owned by
+            # appuser(1001); 0440 mirrors the working google-sa mount so the
+            # non-root container can actually read it. Tighten to 0400 +
+            # fsGroup once verified in-cluster.
+            defaultMode: 288
+            items:
+              - key: SF_SA_KEY_PEM
+                path: sf-sa-key.pem

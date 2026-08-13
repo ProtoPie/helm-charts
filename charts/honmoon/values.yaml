@@ -1,0 +1,77 @@
+# Defaults for the honmoon chart. Every environment-specific value lives in the
+# consuming repo's values file (staging-eks: dev-honmoon/honmoon.values.yaml) —
+# nothing here should be env-specific, so a missing override fails loudly rather
+# than silently deploying dev settings somewhere else.
+
+# Namespace every resource is pinned to, and the Namespace object this chart
+# creates. Set explicitly instead of relying on the release namespace so the
+# rendered output is identical no matter how helm/argocd is invoked.
+namespace: honmoon
+
+# Applied to api, web and the sf-sync CronJob. Empty = no constraint.
+# staging pins arm64 because the dev images are built arm64-only.
+nodeSelector: {}
+
+image:
+  # `tag` carries the digest too, e.g. `api-latest@sha256:...` — that is the
+  # shape argocd-image-updater writes under `update-strategy: digest`, and the
+  # templates render "<repository>:<tag>" (a tag is ignored when a digest is
+  # present). api and web MUST stay separate values paths: they share one ECR
+  # repository, and image-updater collides on shared image names when the two
+  # targets are not independently addressable (that collision is exactly why
+  # this chart replaced the kustomize overlay).
+  api:
+    repository: ""
+    tag: ""
+    pullPolicy: Always
+  web:
+    repository: ""
+    tag: ""
+    pullPolicy: Always
+
+api:
+  replicas: 1
+  serviceAccount:
+    # IRSA role granting s3:PutObject on the license-artifact bucket.
+    roleArn: ""
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+web:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+
+ingress:
+  className: nginx
+  host: ""
+
+sfSync:
+  schedule: "0 * * * *"
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+externalSecrets:
+  refreshInterval: 1h
+  storeName: aws-parameter-store
+  # SSM path prefix; each key below is pulled from <ssmPrefix>/<KEY>.
+  ssmPrefix: ""
+  keys: []
+
+# ConfigMap `honmoon-config` contents, injected wholesale via envFrom.
+config: {}
