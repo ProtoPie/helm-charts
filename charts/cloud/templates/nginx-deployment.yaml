@@ -40,7 +40,15 @@ data:
       include /etc/nginx/virtualhost/virtualhost.conf;
     }
 
-  virtualhost.conf: |
+  virtualhost.conf: |{{ include "cloud.nginx.virtualhost" . }}
+{{- /*
+  The body below is wrapped in a define purely so the Deployment can hash the
+  *rendered* conf (checksum/nginx-conf). It used to hash a hand-picked list of
+  values instead, so a routing change in this template produced no annotation
+  change — nginx pods kept serving the old conf until someone ran
+  `kubectl rollout restart` by hand. Content and indentation are unchanged.
+*/}}
+{{- define "cloud.nginx.virtualhost" }}
     upstream web_server {
       server ent-cloud-web-svc.{{ .Release.Namespace }}.svc.cluster.local;
     }
@@ -237,6 +245,22 @@ data:
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
             proxy_set_header X-Forwarded-Proto $scheme;
         }
+
+        # connect-cloud-server: AMap (高德) JS API secure proxy.
+        # The AMap SDK hard-codes this prefix at the domain root — it cannot be
+        # moved under /api/connect or renamed — so it needs its own location
+        # instead of riding on an existing connect prefix. Without it the
+        # catch-all `location /` sends these to web_server, which 404s.
+        # No trailing slash + proxy_pass without URI → path passed through
+        # unrewritten, i.e. connect-server serves /_AMapService/* at its root
+        # (same layer the /api/connect/ block strips down to).
+        location ^~ /_AMapService {
+            proxy_pass http://connect_cloud_server;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
         {{- end }}
 
         {{- if .Values.analytics.enabled }}
@@ -289,6 +313,7 @@ data:
     }
 
     {{- end }}
+{{- end }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -341,7 +366,9 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/nginx-conf: {{ printf "%s%s%s%s%s%s" (.Values.cloud.host | toString) (.Values.cloud.api.featureFlag | toString) (.Values.userTesting | toYaml) (.Values.analytics | toYaml) (.Values.cloud.share | toYaml) (.Values.connect | toYaml) | sha256sum }}
+        # Hash the rendered virtualhost.conf, not the values it happens to read.
+        # Any change to the routing template now rolls nginx on its own.
+        checksum/nginx-conf: {{ include "cloud.nginx.virtualhost" . | sha256sum }}
       labels:
         app: nginx
     spec:
