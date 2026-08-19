@@ -237,6 +237,22 @@ data:
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
             proxy_set_header X-Forwarded-Proto $scheme;
         }
+
+        # connect-cloud-server: AMap (高德) JS API secure proxy.
+        # The AMap SDK hard-codes this prefix at the domain root — it cannot be
+        # moved under /api/connect or renamed — so it needs its own location
+        # instead of riding on an existing connect prefix. Without it the
+        # catch-all `location /` sends these to web_server, which 404s.
+        # No trailing slash + proxy_pass without URI → path passed through
+        # unrewritten, i.e. connect-server serves /_AMapService/* at its root
+        # (same layer the /api/connect/ block strips down to).
+        location ^~ /_AMapService {
+            proxy_pass http://connect_cloud_server;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
         {{- end }}
 
         {{- if .Values.analytics.enabled }}
