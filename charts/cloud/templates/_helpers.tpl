@@ -113,3 +113,15 @@ Generate Analytics DJANGO_SECRET_KEY - use provided value or generate random
 {{- randAlphaNum 50 }}
 {{- end }}
 {{- end }}
+
+{{/*
+Lookup Cluster Domain
+*/}}
+{{- define "protopie.clusterDomain" -}}
+{{- $kubeSystem := lookup "v1" "ConfigMap" "kube-system" "kubelet-config" }}
+{{- if $kubeSystem }}
+{{- default .Values.clusterDomain (index $kubeSystem.data "clusterDomain") }}
+{{- else }}
+{{- .Values.clusterDomain }}
+{{- end }}
+{{- end }}

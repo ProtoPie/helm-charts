@@ -42,29 +42,29 @@ data:
 
   virtualhost.conf: |
     upstream web_server {
-      server ent-cloud-web-svc.{{ .Release.Namespace }}.svc.cluster.local;
+      server ent-cloud-web-svc.{{ .Release.Namespace }}.svc.{{ include "protopie.clusterDomain" . }};
     }
 
     {{- if .Values.userTesting.enabled }}
     upstream user-testing-api_server {
-      server ent-cloud-ut-svc.{{ .Release.Namespace }}.svc.cluster.local;
+      server ent-cloud-ut-svc.{{ .Release.Namespace }}.svc.{{ include "protopie.clusterDomain" . }};
     }
     upstream user-testing-socket_server {
-      server ent-cloud-ut-svc.{{ .Release.Namespace }}.svc.cluster.local:8081;
+      server ent-cloud-ut-svc.{{ .Release.Namespace }}.svc.{{ include "protopie.clusterDomain" . }}:8081;
     }
     {{- end }}
 
     upstream api_server {
-      server ent-cloud-api-svc.{{ .Release.Namespace }}.svc.cluster.local;
+      server ent-cloud-api-svc.{{ .Release.Namespace }}.svc.{{ include "protopie.clusterDomain" . }};
     }
 
     {{- if .Values.analytics.enabled }}
     upstream analytics-web_server {
-      server ent-analytics-web-svc.{{ .Release.Namespace }}.svc.cluster.local;
+      server ent-analytics-web-svc.{{ .Release.Namespace }}.svc.{{ include "protopie.clusterDomain" . }};
     }
 
     upstream analytics-api_server {
-      server ent-analytics-api-svc.{{ .Release.Namespace }}.svc.cluster.local;
+      server ent-analytics-api-svc.{{ .Release.Namespace }}.svc.{{ include "protopie.clusterDomain" . }};
     }
     {{- end }}
 
@@ -280,6 +280,8 @@ spec:
           httpGet:
             path: /
             port: http
+        resources:
+          {{- toYaml .Values.nginx.resources | nindent 16 }}
         volumeMounts:
         - name: nginx-conf
           mountPath: /etc/nginx # mount nginx-conf volume to /etc/nginx

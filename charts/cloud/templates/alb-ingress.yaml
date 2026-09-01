@@ -12,7 +12,8 @@ spec:
   ingressClassName: {{ .Values.ingress.ingressClassName }}
   {{- end }}
   rules:
-    - host: {{ .Values.ingress.host }}
+    {{- range $host := .Values.ingress.hosts }}
+    - host: {{ $host }}
       http:
         paths:
           - pathType: Prefix
@@ -22,11 +23,14 @@ spec:
                 name: nginx
                 port:
                   number: 80
+    {{- end }}
 
   {{- if .Values.ingress.tls.enabled }}
   tls:
     - hosts:
-        - {{ .Values.ingress.host }}
+      {{- range $host := .Values.ingress.hosts }}
+        - {{ $host }}
+      {{- end }}
       secretName: {{ .Values.ingress.tls.secretName | default "protopie-tls" }}
   {{- end }}
 {{- end }}
