@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+  # Manual re-run without a commit — needed to capture a fresh failure log
+  # (runs older than the retention window return HTTP 410).
+  workflow_dispatch:
 
 jobs:
   release:

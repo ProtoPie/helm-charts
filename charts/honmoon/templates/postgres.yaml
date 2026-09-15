@@ -1,3 +1,6 @@
+{{- if not (hasKey .Values.postgres "enabled") }}
+{{- fail "postgres.enabled must be set explicitly in the consumer's values (true = in-cluster DB, false = external DB). No default on purpose: see values.yaml." }}
+{{- end }}
 {{- if .Values.postgres.enabled }}
 # In-cluster PostgreSQL — see values.yaml `postgres`. Mirrors the enterprise-eks
 # kustomize base (etc/honmoon/base/postgres-statefulset.yaml, retired 2026-09-15)
@@ -32,6 +35,11 @@ kind: StatefulSet
 metadata:
   name: postgres
   namespace: {{ .Values.namespace }}
+  annotations:
+    # Never let ArgoCD prune the production database's StatefulSet, even if a
+    # bad values file drops it from the render (the PVC would survive, the
+    # service would not).
+    argocd.argoproj.io/sync-options: Prune=false
 spec:
   serviceName: postgres
   replicas: 1

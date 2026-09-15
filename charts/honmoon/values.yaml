@@ -53,11 +53,12 @@ web:
       memory: 128Mi
 
 ingress:
-  # Ingress class. Leave EMPTY when the class is selected by an annotation
-  # (prod-oregon: AWS Load Balancer Controller via `kubernetes.io/ingress.class:
-  # alb`) — adding spec.ingressClassName to an existing ALB Ingress recreates
-  # the load balancer (new DNS name).
-  className: nginx
+  # Ingress class. Defaults to EMPTY (no spec.ingressClassName) on purpose: a
+  # values file that fails to apply must not stamp a class onto a live Ingress —
+  # on prod-oregon the class is selected by the `kubernetes.io/ingress.class: alb`
+  # annotation, and adding spec.ingressClassName to an existing ALB Ingress
+  # recreates the load balancer (new DNS name). dev sets `nginx` explicitly.
+  className: ""
   host: ""
   # Extra metadata.annotations (ALB scheme/cert/healthcheck etc.). Empty = none.
   annotations: {}
@@ -84,14 +85,21 @@ config: {}
 
 # In-cluster PostgreSQL (StatefulSet `postgres` + headless Service + init.sql
 # ConfigMap) for environments WITHOUT an external DB — prod-oregon runs this;
-# dev uses an external DB and keeps it disabled. The manifests mirror the
-# enterprise-eks kustomize base this chart replaced (2026-09-15), so the live
-# StatefulSet is adopted without a spec diff: serviceName, selector and
-# volumeClaimTemplates are immutable, and a change there would force a
-# delete/recreate of the data volume's owner. Credentials come from the
-# `honmoon-secret` keys DB_USER / DB_PASSWORD (same secret the api uses).
+# dev uses an external DB. The manifests mirror the enterprise-eks kustomize
+# base this chart replaced (2026-09-15), so the live StatefulSet is adopted
+# without a spec diff: serviceName, selector and volumeClaimTemplates are
+# immutable, and a change there would force a delete/recreate of the data
+# volume's owner. Credentials come from the `honmoon-secret` keys DB_USER /
+# DB_PASSWORD (same secret the api uses).
+#
+# `enabled` has NO default and MUST be set by every consumer (true = in-cluster
+# DB, false = external DB): the chart fails to render otherwise. Under an
+# ArgoCD app with prune, a values file that silently fails to apply would
+# otherwise flip this to false and PRUNE THE PRODUCTION DATABASE's StatefulSet.
+# The StatefulSet also carries `argocd.argoproj.io/sync-options: Prune=false`
+# as a second line of defence.
 postgres:
-  enabled: false
+  # enabled: <required>
   image: postgres:16-alpine
   # Role that owns the schema; init.sql grants it everything. Must equal DB_USER.
   user: honmoon
