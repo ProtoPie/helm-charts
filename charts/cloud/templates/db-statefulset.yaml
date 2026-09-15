@@ -65,6 +65,33 @@ spec:
         {{- if .Values.db.extra.envs }}
         {{- toYaml .Values.db.extra.envs | nindent 8 }}
         {{- end }}
+        {{- with .Values.db.readinessProbe }}
+        # Gate the `db` Service endpoint on Postgres actually accepting
+        # connections. Without this the endpoint is published the moment the
+        # container starts, so on a scale-to-zero wake cloud-api connects into a
+        # postmaster that is still running WAL recovery and dies at
+        # `[Init] Start db migration.` (observed: `Connection refused` and
+        # `FATAL: the database system is starting up`).
+        readinessProbe:
+          {{- if not .exec }}
+          # -h /tmp uses the local Unix socket, so readiness reports on this
+          # postmaster only and never depends on cluster DNS or the Service.
+          exec:
+            command:
+              - /bin/sh
+              - -c
+              - exec pg_isready -U {{ $.Values.db.env.POSTGRES_USER | quote }} -d {{ $.Values.db.env.DB_DATABASE | quote }} -h /tmp -q
+          {{- end }}
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- with .Values.db.startupProbe }}
+        startupProbe:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- with .Values.db.livenessProbe }}
+        livenessProbe:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
         volumeMounts:
         - name: pg-data
           mountPath: /bitnami/postgresql/data

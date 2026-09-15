@@ -38,6 +38,43 @@ spec:
       imagePullSecrets:
       - name: protopie-private-registry
       {{- end }}
+      {{- if .Values.connect.server.waitForDb.enabled }}
+      # Same wake race as cloud-api: the entrypoint runs `prisma migrate deploy`
+      # before serving and exits 1 on the first failure, so a simultaneous KEDA
+      # 0->1 of connect-db and connect-server crash-loops the server
+      # (observed in f2-ee: `P1001: Can't reach database server at
+      # connect-db:5432`, 3 restarts). Uses the connect-db image for pg_isready.
+      initContainers:
+        - name: wait-for-db
+          image: "{{ .Values.connect.db.image.repository }}:{{ .Values.connect.db.image.tag }}"
+          imagePullPolicy: {{ .Values.connect.db.image.pullPolicy | default "IfNotPresent" }}
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -eu
+              deadline=$(( $(date +%s) + {{ .Values.connect.server.waitForDb.timeoutSeconds }} ))
+              until pg_isready -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -q; do
+                if [ "$(date +%s)" -ge "$deadline" ]; then
+                  echo "wait-for-db: ${DB_HOST}:${DB_PORT} not ready after {{ .Values.connect.server.waitForDb.timeoutSeconds }}s"
+                  exit 1
+                fi
+                echo "wait-for-db: waiting for ${DB_HOST}:${DB_PORT} ..."
+                sleep {{ .Values.connect.server.waitForDb.periodSeconds }}
+              done
+              echo "wait-for-db: ${DB_HOST}:${DB_PORT} is accepting connections"
+          env:
+            - name: DB_HOST
+              value: {{ .Values.connect.db.host | default "connect-db" | quote }}
+            - name: DB_PORT
+              value: {{ .Values.connect.db.port | default "5432" | quote }}
+            - name: DB_USER
+              value: {{ .Values.connect.db.user | quote }}
+            - name: DB_NAME
+              value: {{ .Values.connect.db.database | quote }}
+          resources:
+            {{- toYaml .Values.connect.server.waitForDb.resources | nindent 12 }}
+      {{- end }}
       containers:
         - name: connect-server
           image: "{{ .Values.connect.server.image.repository }}:{{ .Values.connect.server.image.tag }}"

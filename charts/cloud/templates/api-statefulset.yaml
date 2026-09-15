@@ -27,6 +27,63 @@ spec:
       imagePullSecrets:
       - name: protopie-private-registry
       {{- end }}
+      {{- if .Values.cloud.api.waitForDb.enabled }}
+      # cloud-api runs `ragtime` migrations during boot and calls System.exit on
+      # the first failed connection — it has no retry. On a scale-to-zero wake
+      # KEDA scales `db` and `enterprise-cloud-api` from 0 to 1 at the same
+      # instant (both are follower ScaledObjects on the same nginx trigger), so
+      # api reliably loses the race and CrashLoopBackOffs while Postgres runs WAL
+      # recovery. Block here instead, so the backoff never starts.
+      #
+      # Uses the db image, not the api image: the api image has no pg_isready and
+      # only a plain `nc`, which cannot tell "port open" from "the database
+      # system is starting up" — a real observed failure mode. The db image is
+      # already pulled on the node for db-0, so this costs no extra pull.
+      initContainers:
+        - name: wait-for-db
+          image: "{{ .Values.image.db.repository }}:{{ .Values.image.db.tag }}"
+          imagePullPolicy: {{ .Values.image.db.pullPolicy }}
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -eu
+              deadline=$(( $(date +%s) + {{ .Values.cloud.api.waitForDb.timeoutSeconds }} ))
+              until pg_isready -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -q; do
+                if [ "$(date +%s)" -ge "$deadline" ]; then
+                  echo "wait-for-db: ${DB_HOST}:${DB_PORT} not ready after {{ .Values.cloud.api.waitForDb.timeoutSeconds }}s"
+                  exit 1
+                fi
+                echo "wait-for-db: waiting for ${DB_HOST}:${DB_PORT} ..."
+                sleep {{ .Values.cloud.api.waitForDb.periodSeconds }}
+              done
+              echo "wait-for-db: ${DB_HOST}:${DB_PORT} is accepting connections"
+          env:
+            - name: DB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: db-config
+                  key: host
+            - name: DB_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: db-config
+                  key: port
+            - name: DB_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: db-config
+                  key: database
+            # pg_isready only pings the postmaster, so this user is never
+            # authenticated — no password is read here.
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "protopie.db.secretName" . }}
+                  key: username
+          resources:
+            {{- toYaml .Values.cloud.api.waitForDb.resources | nindent 12 }}
+      {{- end }}
       containers:
         - name: ent-cloud-api
           securityContext:
