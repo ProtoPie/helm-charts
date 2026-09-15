@@ -1,0 +1,96 @@
+{{- if .Values.postgres.enabled }}
+# In-cluster PostgreSQL — see values.yaml `postgres`. Mirrors the enterprise-eks
+# kustomize base (etc/honmoon/base/postgres-statefulset.yaml, retired 2026-09-15)
+# field-for-field so the live prod StatefulSet is adopted without a spec diff.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-init
+  namespace: {{ .Values.namespace }}
+data:
+  init.sql: |
+    CREATE SCHEMA IF NOT EXISTS "{{ .Values.postgres.database }}" AUTHORIZATION {{ .Values.postgres.user }};
+    GRANT ALL ON SCHEMA "{{ .Values.postgres.database }}" TO {{ .Values.postgres.user }};
+    ALTER DEFAULT PRIVILEGES IN SCHEMA "{{ .Values.postgres.database }}" GRANT ALL ON TABLES TO {{ .Values.postgres.user }};
+    ALTER DEFAULT PRIVILEGES IN SCHEMA "{{ .Values.postgres.database }}" GRANT ALL ON SEQUENCES TO {{ .Values.postgres.user }};
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: {{ .Values.namespace }}
+spec:
+  selector:
+    app: postgres
+  ports:
+    - port: 5432
+      targetPort: 5432
+  clusterIP: None
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  namespace: {{ .Values.namespace }}
+spec:
+  serviceName: postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: {{ .Values.postgres.image }}
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: honmoon-secret
+                  key: DB_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: honmoon-secret
+                  key: DB_PASSWORD
+            - name: POSTGRES_DB
+              value: {{ .Values.postgres.database }}
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+            - name: init
+              mountPath: /docker-entrypoint-initdb.d
+          resources:
+            {{- toYaml .Values.postgres.resources | nindent 12 }}
+          livenessProbe:
+            exec:
+              command: ["pg_isready", "-U", {{ .Values.postgres.user | quote }}, "-d", {{ .Values.postgres.database | quote }}]
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", {{ .Values.postgres.user | quote }}, "-d", {{ .Values.postgres.database | quote }}]
+            initialDelaySeconds: 5
+            periodSeconds: 5
+      volumes:
+        - name: init
+          configMap:
+            name: postgres-init
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: [ReadWriteOnce]
+        storageClassName: {{ .Values.postgres.storageClassName }}
+        resources:
+          requests:
+            storage: {{ .Values.postgres.storage }}
+{{- end }}

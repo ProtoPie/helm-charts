@@ -27,5 +27,13 @@ spec:
           imagePullPolicy: {{ .Values.image.web.pullPolicy }}
           ports:
             - containerPort: 80
+          # Rollouts are unattended (argocd-image-updater digest pins): a new web
+          # pod must actually serve the SPA before the old one is terminated.
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 2
+            periodSeconds: 5
           resources:
             {{- toYaml .Values.web.resources | nindent 12 }}

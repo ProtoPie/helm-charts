@@ -53,8 +53,14 @@ web:
       memory: 128Mi
 
 ingress:
+  # Ingress class. Leave EMPTY when the class is selected by an annotation
+  # (prod-oregon: AWS Load Balancer Controller via `kubernetes.io/ingress.class:
+  # alb`) — adding spec.ingressClassName to an existing ALB Ingress recreates
+  # the load balancer (new DNS name).
   className: nginx
   host: ""
+  # Extra metadata.annotations (ALB scheme/cert/healthcheck etc.). Empty = none.
+  annotations: {}
 
 sfSync:
   schedule: "0 * * * *"
@@ -75,3 +81,28 @@ externalSecrets:
 
 # ConfigMap `honmoon-config` contents, injected wholesale via envFrom.
 config: {}
+
+# In-cluster PostgreSQL (StatefulSet `postgres` + headless Service + init.sql
+# ConfigMap) for environments WITHOUT an external DB — prod-oregon runs this;
+# dev uses an external DB and keeps it disabled. The manifests mirror the
+# enterprise-eks kustomize base this chart replaced (2026-09-15), so the live
+# StatefulSet is adopted without a spec diff: serviceName, selector and
+# volumeClaimTemplates are immutable, and a change there would force a
+# delete/recreate of the data volume's owner. Credentials come from the
+# `honmoon-secret` keys DB_USER / DB_PASSWORD (same secret the api uses).
+postgres:
+  enabled: false
+  image: postgres:16-alpine
+  # Role that owns the schema; init.sql grants it everything. Must equal DB_USER.
+  user: honmoon
+  # Database AND schema name (prod uses the same string for both).
+  database: enterprise-license
+  storageClassName: gp3
+  storage: 20Gi
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
