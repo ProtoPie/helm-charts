@@ -14,9 +14,11 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-
-      - name: Fetch history
-        run: git fetch --prune --unshallow
+        with:
+          # chart-releaser diffs charts/ against the latest release tag, so it
+          # needs the full history and all tags (the previous shallow checkout +
+          # `git fetch --unshallow` is what upstream's example replaces with this).
+          fetch-depth: 0
 
       - name: Configure Git
         run: |
@@ -30,6 +32,14 @@ jobs:
 
       - name: Run chart-releaser
         uses: helm/chart-releaser-action@v1.5.0
+        with:
+          # cr.yaml → skip-existing: true. Every run since 2025-10 failed because
+          # charts/cloud changed without a version bump: cr re-packaged cloud-3.2.1,
+          # `cr upload` hit the already-existing release and aborted (errexit)
+          # before ever reaching the other charts — honmoon 0.1.0 was never
+          # published. With skip-existing an already-released version is skipped
+          # and the rest of the charts are still uploaded and indexed.
+          config: cr.yaml
         env:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
           CR_GENERATE_RELEASE_NOTES: true

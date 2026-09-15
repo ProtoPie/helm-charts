@@ -110,6 +110,11 @@ spec:
         - name: sf-sa
           secret:
             secretName: honmoon-sf-key
+            # Salesforce is a gated, graceful-skip integration: if the
+            # honmoon-sf-key ExternalSecret ever fails to sync, the api must still
+            # start (the sync CronJob is the only hard consumer). Without this the
+            # pod sits in FailedMount and every unattended rollout stalls.
+            optional: true
             # Runbook (sf-sync-deployment.md §2) asks for 0400 owned by
             # appuser(1001); 0440 mirrors the working google-sa mount so the
             # non-root container can actually read it. Tighten to 0400 +

@@ -1,0 +1,4 @@
+# helm/chart-releaser (cr) config, wired via .github/workflows/release.yaml.
+# skip-existing: a chart whose <name>-<version> GitHub release already exists is
+# skipped instead of failing the whole run. Bump Chart.yaml `version` to release.
+skip-existing: true
