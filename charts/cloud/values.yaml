@@ -263,6 +263,26 @@ cloud:
       httpGet:
         path: /
         port: http
+    # Block cloud-api's boot until `db` accepts connections. cloud-api runs
+    # ragtime migrations at startup and exits on the first connection failure
+    # with no retry, so without this it CrashLoopBackOffs whenever the database
+    # starts at the same time it does (KEDA scale-to-zero wake, node drain,
+    # cluster restart). Set enabled: false to restore the old behaviour.
+    waitForDb:
+      enabled: true
+      # Generous: this only costs time when the db really is down, and the
+      # alternative (failing here) is the crash loop we are removing. Sized
+      # above the observed worst case — a WAL crash recovery after an unclean
+      # spot shutdown, which POSTGRESQL_INIT_MAX_TIMEOUT allows up to 600s.
+      timeoutSeconds: 600
+      periodSeconds: 3
+      resources:
+        requests:
+          cpu: 10m
+          memory: 32Mi
+        limits:
+          cpu: 100m
+          memory: 128Mi
   web:
     replicas: 1
   wellKnown:
@@ -314,6 +334,27 @@ db:
     DB_WRITE_PASSWORD: ""
   extra:
     envs: []
+  # Gate the `db` Service endpoint on Postgres actually accepting connections.
+  # pg_isready is a protocol-level ping and needs no password, but it does need
+  # an explicit -U: a bare `pg_isready` exits 3 ("no attempt"). POSTGRES_USER is
+  # the superuser name the entrypoint always creates, so this works before the
+  # init scripts have run.
+  #
+  # Kept as a plain probe object so an environment can override or disable it
+  # (set to null) from its own values file. The template fills in the `exec`
+  # command from db.env.POSTGRES_USER / db.env.DB_DATABASE when it is omitted
+  # here, so overriding only the timings below does not silently drop the check.
+  readinessProbe:
+    initialDelaySeconds: 5
+    periodSeconds: 5
+    timeoutSeconds: 5
+    successThreshold: 1
+    failureThreshold: 6
+  # No livenessProbe by default: a slow WAL recovery must not be mistaken for a
+  # hung postmaster and killed mid-recovery — that is the restart loop the
+  # 2026-07-27 wake hardening removed. Readiness alone is what gates traffic.
+  livenessProbe: null
+  startupProbe: null
   ## @param db.resources Set container requests and limits for different resources like CPU or memory (essential for production workloads)
   ## Example:
   ## resources:
@@ -377,6 +418,20 @@ connect:
       limits:
         cpu: "1000m"
         memory: "2Gi"
+    # Block connect-server's boot until connect-db accepts connections. The
+    # entrypoint runs `prisma migrate deploy` and exits 1 on the first failure,
+    # so without this it crash-loops whenever the two start together.
+    waitForDb:
+      enabled: true
+      timeoutSeconds: 600
+      periodSeconds: 3
+      resources:
+        requests:
+          cpu: 10m
+          memory: 32Mi
+        limits:
+          cpu: 100m
+          memory: 128Mi
   # Non-secret runtime config → connect-config ConfigMap (safe to keep in git).
   env: {}
   # Secret KEY list only (values come from SSM via ExternalSecret when
