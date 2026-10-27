@@ -46,7 +46,7 @@ image:
   nginx:
     pullPolicy: IfNotPresent
     repository: nginx
-    tag: 1.26.3-alpine
+    tag: 1.30.6-alpine
   db:
     pullPolicy: IfNotPresent
     repository: bitnami/postgresql
