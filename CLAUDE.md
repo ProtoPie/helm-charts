@@ -17,7 +17,7 @@ IMPORTANT: `db.env.DB_WRITE_PASSWORD`나 `db.env.DB_READ_PASSWORD`가 비어있�
 ## 차트 구성
 
 - `charts/cloud/` — ProtoPie Cloud 온프레미스 배포 차트
-  - 이미지: `protopie/enterprise-onpremises:{api,web}-<version>`, `nginx:1.26.3-alpine`, `bitnami/postgresql:14`
+  - 이미지: `protopie/enterprise-onpremises:{api,web}-<version>`, `nginx:1.30.6-alpine`, `bitnami/postgresql:14`
   - `config.yml`과 `license.pem`은 `--set-file` 플래그로 주입, `api-configmap.yaml`에 ConfigMap으로 저장
   - 선택 컴포넌트: Analytics (비공개 베타, ECR 이미지), User Testing
 - `charts/aws-ecr-credential/` — AWS ECR 이미지 풀 시크릿 자동 갱신 (CronJob, 8시간 주기)
