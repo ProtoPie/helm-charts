@@ -348,11 +348,26 @@ postgresql:
     persistentVolumeClaimRetentionPolicy:
       enabled: true
 
+# CoC license file (PS-2925), signed for organizationId below:
+#   --set-file connectLicense=connect.lic
+# Stored as ConfigMap connect-license (key connect.lic) and mounted read-only as
+# a directory into cloud-api (whether or not connect.enabled) and connect-server,
+# both at /etc/protopie/connect-license with PPC_LICENSE_DIR pointing there.
+# No subPath and no checksum annotation, so replacing only this file restarts
+# neither pod. Empty → no ConfigMap; the volume is optional and pods still start.
+connectLicense: ""
+# Organization ID the .lic is bound to (from Honmoon). Set as
+# PPC_ORGANIZATION_ID on cloud-api and connect-server with the same value,
+# whether or not connect.enabled. Not secret. Empty → the env is not set, and
+# connect.enabled with an empty value fails the render (the CoC server would
+# refuse to boot). Set it here only, not in connect.env.
+organizationId: ""
+
 # Connect on Cloud (CoC) — optional connect-server + dedicated redis/postgres,
 # mirrored from the enterprise-eks protopie chart. When enabled, nginx routes
 # /connect (web UI), /api/connect/ (HTTP API) and /api/connect/socket.io/
-# (WebSocket) to connect-server, and cloud-api gets CONNECT_SERVICE_KEY wired
-# from connect-app-secret.
+# (WebSocket) to connect-server. cloud-api gets CONNECT_SERVICE_KEY wired from
+# connect-app-secret; the env and that Secret render even when disabled.
 connect:
   enabled: false
   replicas: 1

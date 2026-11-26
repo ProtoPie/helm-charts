@@ -34,19 +34,24 @@ spec:
           image: "{{ .Values.image.cloud.api.repository }}:{{ .Values.image.cloud.api.tag }}"
           imagePullPolicy: {{ .Values.image.cloud.api.pullPolicy }}
           env:
-            {{- if .Values.connect.enabled }}
             # cloud-api /connect-cloud/* server-to-server auth key. Re-references
             # the same connect-app-secret key connect-server reads as
             # PPC_CLOUD_SERVICE_KEY, so the two values always match (one SSM
             # param). optional: if the key isn't provisioned cloud-api still
             # boots and only the connect endpoints fail closed.
+            # Always set, whether or not connect.enabled (PS-2925): cloud-api
+            # reads it once at boot, so turning CoC on later must not change
+            # this pod spec.
             - name: CONNECT_SERVICE_KEY
               valueFrom:
                 secretKeyRef:
                   name: connect-app-secret
                   key: PPC_CLOUD_SERVICE_KEY
                   optional: true
-            {{- end }}
+            # CoC license slot + organization ID (PS-2925), whether or not
+            # connect.enabled — a customer who ended CoC still needs its
+            # termination file read.
+            {{- include "cloud.connectLicense.env" . | nindent 12 }}
             - name: DB_HOST
               valueFrom:
                 configMapKeyRef:
@@ -127,6 +132,7 @@ spec:
               mountPath: /app/default
             - name: config
               mountPath: /app/resources
+            {{- include "cloud.connectLicense.volumeMount" . | nindent 12 }}
       {{- include "cloud.computeScheduling" . | nindent 6 }}
       volumes:
         {{- if .Values.cloud.volumes.usePVC }}
@@ -163,6 +169,7 @@ spec:
         - name: upload
           persistentVolumeClaim:
             claimName: upload-enterprise-cloud-api
+        {{- include "cloud.connectLicense.volume" . | nindent 8 }}
 
 ---
 

@@ -56,6 +56,8 @@ spec:
             # required for the Service to reach it.
             - name: PPC_ALLOW_BIND_ALL
               value: {{ .Values.connect.server.allowBindAll | default "1" | quote }}
+            # CoC license slot + organization ID, same values as cloud-api (PS-2925).
+            {{- include "cloud.connectLicense.env" . | nindent 12 }}
           # Non-secret config from connect-config (ConfigMap) and secrets from
           # connect-app-secret (inline, or SSM when externalSecrets.enabled=true).
           envFrom:
@@ -81,15 +83,17 @@ spec:
             failureThreshold: 3
           resources:
             {{- toYaml .Values.connect.server.resources | nindent 12 }}
-          {{- if .Values.connect.persistence.enabled }}
           volumeMounts:
+            {{- if .Values.connect.persistence.enabled }}
             - name: data
               mountPath: {{ .Values.connect.persistence.mountPath | default "/data" }}
-          {{- end }}
-      {{- if .Values.connect.persistence.enabled }}
+            {{- end }}
+            {{- include "cloud.connectLicense.volumeMount" . | nindent 12 }}
       volumes:
+        {{- if .Values.connect.persistence.enabled }}
         - name: data
           persistentVolumeClaim:
             claimName: connect-data
-      {{- end }}
+        {{- end }}
+        {{- include "cloud.connectLicense.volume" . | nindent 8 }}
 {{- end }}

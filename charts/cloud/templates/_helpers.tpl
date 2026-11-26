@@ -145,3 +145,46 @@ tolerations:
   {{- toYaml . | nindent 2 }}
 {{- end }}
 {{- end -}}
+
+{{/*
+CoC license slot (PS-2925), shared by cloud-api and connect-server so both read
+the same folder. The ConfigMap is mounted as a directory (no subPath) and no
+checksum annotation covers it: replacing only connect.lic leaves both pod specs
+unchanged and kubelet swaps the file in place. optional: pods start without it.
+The path stays outside /app/resources (cloud-api scans license.*pem there) and
+outside /data (connect-server's PVC, which holds its own /data/license).
+*/}}
+{{- define "cloud.connectLicense.dir" -}}
+/etc/protopie/connect-license
+{{- end -}}
+
+{{/*
+Explicit env, so on connect-server it wins over envFrom connect-config.
+connect.enabled without organizationId fails the render: a connect-server that
+reads its own .lic (PS-2926) refuses to boot in production without
+PPC_ORGANIZATION_ID, and a render error is louder than a crash loop.
+*/}}
+{{- define "cloud.connectLicense.env" -}}
+{{- if and .Values.connect.enabled (not .Values.organizationId) }}
+{{- fail "connect.enabled requires organizationId (PPC_ORGANIZATION_ID for cloud-api and connect-server, PS-2925)" }}
+{{- end }}
+- name: PPC_LICENSE_DIR
+  value: {{ include "cloud.connectLicense.dir" . | quote }}
+{{- with .Values.organizationId }}
+- name: PPC_ORGANIZATION_ID
+  value: {{ . | quote }}
+{{- end }}
+{{- end -}}
+
+{{- define "cloud.connectLicense.volumeMount" -}}
+- name: connect-license
+  mountPath: {{ include "cloud.connectLicense.dir" . }}
+  readOnly: true
+{{- end -}}
+
+{{- define "cloud.connectLicense.volume" -}}
+- name: connect-license
+  configMap:
+    name: connect-license
+    optional: true
+{{- end -}}

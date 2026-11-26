@@ -1,0 +1,16 @@
+{{- /* CoC license file (PS-2925): --set-file connectLicense=connect.lic.
+       Mounted by cloud-api and connect-server through the cloud.connectLicense.*
+       helpers. Keep this out of every checksum/* annotation — a new .lic must not
+       restart either pod. Empty → no ConfigMap (the volume is optional). */ -}}
+{{- $lic := .Values.connectLicense | default "" | trim }}
+{{- if $lic }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: connect-license
+  labels:
+    {{- include "protopie.labels" . | nindent 4 }}
+data:
+  connect.lic: |-
+{{ $lic | indent 4 }}
+{{- end }}
